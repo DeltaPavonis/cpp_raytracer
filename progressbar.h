@@ -2,6 +2,7 @@
 #include <chrono>
 #include <array>
 #include <utility>
+#include <cassert>
 
 /* ProgressBar displays a progress bar for time-costly for-loops.
 If DISABLE_PRINTING is true, then the progress bar will not print.
@@ -86,6 +87,7 @@ struct ProgressBar {
         end{end_}, last_percent{0}, downscale_factor{downscale_factor_},
         start_time{clock_type::now()}
     {
+        assert(end > beg);
         if constexpr (!DISABLE_PRINTING) {
             std::cout << desc << ": |" << std::string(100 / downscale_factor, ' ') << "|\n";
             std::cout << std::string(std::string(desc + ": |").size(), ' ') << std::flush;
