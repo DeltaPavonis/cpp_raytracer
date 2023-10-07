@@ -63,7 +63,7 @@ public:
 /* Returns a color linearly interpolated, with a proportion of `1 - d` of `a` and
 a proportion of `d` of `b`. */
 auto lerp(const RGB &a, const RGB &b, double d) {
-    return RGB::from_rgb(
+    return RGB::from_mag(
         (1 - d) * a.r + d * b.r,
         (1 - d) * a.g + d * b.g,
         (1 - d) * a.b + d * b.b
