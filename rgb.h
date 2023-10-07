@@ -1,3 +1,6 @@
+#ifndef RGB_H
+#define RGB_H
+
 #include <string>
 
 /* `RGB` encapsulates the notion of color as three real-valued numbers in the range [0, 1],
@@ -66,3 +69,5 @@ auto lerp(const RGB &a, const RGB &b, double d) {
         (1 - d) * a.b + d * b.b
     );
 }
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef RAY3D_H
+#define RAY3D_H
+
 #include "vec3d.h"
 
 struct Ray3D {
@@ -8,3 +11,5 @@ struct Ray3D {
 
     Ray3D(const Point3D &origin_, const Vec3D &dir_) : origin{origin_}, dir{dir_} {}
 };
+
+#endif

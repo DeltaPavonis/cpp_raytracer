@@ -1,3 +1,6 @@
+#ifndef VEC3D_H
+#define VEC3D_H
+
 #include <iostream>
 #include <cmath>
 
@@ -46,3 +49,5 @@ auto Vec3D::unit_vector() const {return *this / this->mag();}
 
 /* `Point3D` is a type alias for `Vec3D`, declared to improve clarity in the code */
 using Point3D = Vec3D;
+
+#endif

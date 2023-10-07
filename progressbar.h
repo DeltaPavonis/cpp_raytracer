@@ -1,3 +1,6 @@
+#ifndef PROGRESS_BAR_H
+#define PROGRESS_BAR_H
+
 #include <string>
 #include <chrono>
 #include <array>
@@ -101,3 +104,5 @@ struct ProgressBar {
                   << seconds_to_dhms(total_seconds) << std::endl;
     }
 };
+
+#endif

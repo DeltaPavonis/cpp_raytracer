@@ -1,3 +1,6 @@
+#ifndef IMAGE_H
+#define IMAGE_H
+
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -70,3 +73,5 @@ public:
         return Image(img);
     }
 };
+
+#endif
