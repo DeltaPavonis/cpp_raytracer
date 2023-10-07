@@ -1,13 +1,22 @@
 #include "image.h"
 #include "ray3d.h"
 #include "viewport.h"
-// #include "kx.h"
 
 using namespace std;
 
 /* Create a blue-to-white gradient depending on the ray's y-coordinate; bluer for lesser
 y-coordinates and whiter for larger y-coordinates (so bluer at the top and whiter at the bottom). */
 auto ray_color(const Ray3D &ray) {
+
+    /* Add a completely green sphere with center (0, 0, -1) (one unit directly in front of the
+    camera center), and radius 0.5. */
+    if (ray.hits(Sphere{
+        .center = {0, 0, -1},
+        .radius = 0.5
+    })) {
+        return RGB::from_rgb(0, 255, 0);  /* Green */
+    }
+
     return lerp(RGB::from_mag(1, 1, 1), RGB::from_mag(0.5, 0.7, 1),
                 0.5 * ray.dir.unit_vector().y + 0.5);
 }
