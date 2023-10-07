@@ -1,15 +1,17 @@
 #ifndef RAY3D_H
 #define RAY3D_H
 
+#include <cmath>
 #include "vec3d.h"
 #include "sphere.h"
+using namespace std;
 
 struct Ray3D {
     Point3D origin;
     Vec3D dir;
 
     /* Evaluate the ray at time `t` */
-    auto operator() (double t) {return origin + t * dir;}
+    auto operator() (double t) const {return origin + t * dir;}
 
     Ray3D(const Point3D &origin_, const Vec3D &dir_) : origin{origin_}, dir{dir_} {}
 
@@ -39,6 +41,20 @@ struct Ray3D {
         auto c = dot(origin_to_center, origin_to_center) - s.radius * s.radius;
         auto discriminant = b * b - 4 * a * c;
         return discriminant >= 0;  /* Quadratic has a solution iff determinant is non-negative */
+    }
+
+    /* `hit_location` returns the smallest `t` (assuming all solutions for `t` are non-negative)
+    where this ray intersects the sphere `s`. If there are no solutions for `t`, returns a negative
+    number. */
+    double hit_time(const Sphere &s) const {
+        auto origin_to_center = origin - s.center;
+        auto a = dot(dir, dir);
+        auto b = 2 * dot(dir, origin_to_center);
+        auto c = dot(origin_to_center, origin_to_center) - s.radius * s.radius;
+        auto discriminant = b * b - 4 * a * c;
+
+        /* Quadratic has a solution iff determinant is non-negative */
+        return (discriminant >= 0 ? (-b - std::sqrt(discriminant)) / (2 * a) : -1);
     }
 };
 
