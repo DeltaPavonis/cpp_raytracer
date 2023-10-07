@@ -44,17 +44,17 @@ struct Sphere : Hittable {
         /* Quadratic has no solutions whenever the discriminant is negative */
         if (discriminant_quarter < 0) {return {};}
 
-        /* If the quadratic has solutions, find the smallest one in the range [t_min, t_max] */
+        /* If the quadratic has solutions, find the smallest one in the range (t_min, t_max) */
         auto discriminant_quarter_sqrt = std::sqrt(discriminant_quarter);  /* Evaluate this once */
         auto root = (-b_half - discriminant_quarter_sqrt) / a;  /* Check smaller root first*/
 
-        if (!(t_min <= root && root <= t_max)) {
+        if (!(t_min < root && root < t_max)) {
 
-            /* Smaller root not in [t_min, t_max], try the other root */
+            /* Smaller root not in (t_min, t_max), try the other root */
             root = (-b_half + discriminant_quarter_sqrt) / a;
 
-            if (!(t_min <= root && root <= t_max)) {
-                /* No root in the range [t_min, t_max], return {} */
+            if (!(t_min < root && root < t_max)) {
+                /* No root in the range (t_min, t_max), return {} */
                 return {};
             }
         }

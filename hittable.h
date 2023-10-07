@@ -15,11 +15,14 @@ struct hit_info {
     Vec3D surface_normal{};
 
     /* Converts to `true` if it represents the presence of an intersection, and false if not */
-    operator bool() {return t >= 0.0;}
+    operator bool() {return t > 0.0;}
 };
 
 struct Hittable {
+    
+    /* Check if the object is hit by a ray in the time range (t_min, t_max) */
     virtual hit_info hit_by(const Ray3D &ray, double t_min, double t_max) const {return {};}
+
     virtual ~Hittable() = default;
 };
 
