@@ -19,8 +19,8 @@ class Image {
                                                           pixels{pixels_} {}
 
 public:
-    auto width() {return w;}
-    auto height() {return h;}
+    auto width() const {return w;}
+    auto height() const {return h;}
     auto& operator[] (size_t row) {return pixels[row];}
     const auto& operator[] (size_t row) const {return pixels[row];}
 
