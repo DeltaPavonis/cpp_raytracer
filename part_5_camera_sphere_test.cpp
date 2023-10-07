@@ -1,6 +1,7 @@
 #include "image.h"
 #include "ray3d.h"
 #include "viewport.h"
+#include "sphere.h"
 
 using namespace std;
 
@@ -10,10 +11,7 @@ auto ray_color(const Ray3D &ray) {
 
     /* Add a completely green sphere with center (0, 0, -1) (one unit directly in front of the
     camera center), and radius 0.5. */
-    if (ray.hit(Sphere{
-        .center = {0, 0, -1},
-        .radius = 0.5
-    }) >= 0) {
+    if (Sphere(Point3D{0, 0, -1}, 0.5).hit_by(ray)) {
         return RGB::from_rgb(0, 255, 0);  /* Green */
     }
 
