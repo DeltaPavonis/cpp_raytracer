@@ -17,6 +17,9 @@ auto ray_color(const Ray3D &ray) {
         return RGB::from_rgb(0, 255, 0);  /* Green */
     }
 
+    /* For the B-component, we scale the y-component of the unit vector of the direction of `ray`
+    to from 0 to 1 by observing that the y-component of any unit vector must be in [-1, 1], and
+    so multiplying by 0.5 then adding 0.5 suffices. */
     return lerp(RGB::from_mag(1, 1, 1), RGB::from_mag(0.5, 0.7, 1),
                 0.5 * ray.dir.unit_vector().y + 0.5);
 }
@@ -24,7 +27,7 @@ auto ray_color(const Ray3D &ray) {
 void render(Image &img, const Viewport &vp) {
 
     /* Render each pixel */
-    for (ProgressBar<size_t> row(0, img.height(), "Rendering rows"); row(); ++row) {
+    for (ProgressBar<size_t> row(0, img.height(), "Rendering image"); row(); ++row) {
         for (size_t col = 0; col < img.width(); ++col) {
             /* Send a ray from the camera through the center of the pixel */
             auto pixel_center = vp.pixel_center(row, col);
