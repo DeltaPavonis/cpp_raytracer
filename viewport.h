@@ -9,13 +9,15 @@ is projected. The class `Viewport` encapsulates the notion of a viewport along w
 camera/eye point. */
 class Viewport {
 
-    Viewport(double w, double h, const Point3D &camera_center_, double focal_length_)
+    Viewport(double w, double h, const Image &img, const Point3D &camera_center_,
+             double focal_length_)
       : width{w}, height{h},
         /* Right-handed coordinates: The y-axis goes up, the x-axis goes right, the NEGATIVE z-axis
         points from the camera toward the image. Thus, the vector going down the viewport (`y_vec`)
         has a negative y-component. */
         x_vec{width, 0, 0}, y_vec{0, -height, 0},
-        pixel_delta_x{x_vec / width}, pixel_delta_y{y_vec / height},
+        pixel_delta_x{x_vec / static_cast<double>(img.width())},
+        pixel_delta_y{y_vec / static_cast<double>(img.height())},
         camera_center{camera_center_}, focal_length{focal_length_},
         /* The upper left point of the viewport is found by starting at the camera, moving
         `focal_length` units towards the camera (so adding -`focal_length` to the z-coordinate
@@ -55,7 +57,7 @@ public:
         Also note that we must use `img.aspect_ratio()` and not the theoretical desired ratio, because
         the ideal ratio may not be the actual aspect ratio of `img`, because `img.width()` and
         `img.height()` both must be integers. */
-        return Viewport(w, w / img.aspect_ratio(), camera_center, focal_length);
+        return Viewport(w, w / img.aspect_ratio(), img, camera_center, focal_length);
     }
 
     static auto from_height_and_image(double h, const Image &img, const Point3D &camera_center = {},
@@ -64,7 +66,7 @@ public:
         Also note that we must use `img.aspect_ratio()` and not the theoretical desired ratio, because
         the ideal ratio may not be the actual aspect ratio of `img`, because `img.width()` and
         `img.height()` both must be integers. */
-        return Viewport(h * img.aspect_ratio(), h, camera_center, focal_length);
+        return Viewport(h * img.aspect_ratio(), h, img, camera_center, focal_length);
     }
 };
 
