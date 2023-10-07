@@ -10,10 +10,10 @@ auto ray_color(const Ray3D &ray) {
 
     /* Add a completely green sphere with center (0, 0, -1) (one unit directly in front of the
     camera center), and radius 0.5. */
-    if (ray.hits(Sphere{
+    if (ray.hit(Sphere{
         .center = {0, 0, -1},
         .radius = 0.5
-    })) {
+    }) >= 0) {
         return RGB::from_rgb(0, 255, 0);  /* Green */
     }
 

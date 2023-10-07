@@ -32,29 +32,19 @@ struct Ray3D {
     Note: In reality, we need to find a non-negative solution of t, because the ray heads in
     that direction. The current function would return true if the LINE intersects the sphere,
     not necessarily the ray (so if the sphere was located behind the camera, it could still be
-    drawn). We will fix this in the future.
-    */
-    bool hits(const Sphere &s) const {
+    drawn). We will fix this in the future. */
+    
+    /* `hit` returns the smallest `t` (assuming all solutions for `t` are non-negative) where this
+    ray intersects the sphere `s`. If there are no solutions for `t`, returns a negative number. */
+    double hit(const Sphere &s) const {
         auto origin_to_center = origin - s.center;
         auto a = dot(dir, dir);
-        auto b = 2 * dot(dir, origin_to_center);
+        auto b_half = dot(dir, origin_to_center);
         auto c = dot(origin_to_center, origin_to_center) - s.radius * s.radius;
-        auto discriminant = b * b - 4 * a * c;
-        return discriminant >= 0;  /* Quadratic has a solution iff determinant is non-negative */
-    }
+        auto discriminant_quarter = b_half * b_half - a * c;
 
-    /* `hit_location` returns the smallest `t` (assuming all solutions for `t` are non-negative)
-    where this ray intersects the sphere `s`. If there are no solutions for `t`, returns a negative
-    number. */
-    double hit_time(const Sphere &s) const {
-        auto origin_to_center = origin - s.center;
-        auto a = dot(dir, dir);
-        auto b = 2 * dot(dir, origin_to_center);
-        auto c = dot(origin_to_center, origin_to_center) - s.radius * s.radius;
-        auto discriminant = b * b - 4 * a * c;
-
-        /* Quadratic has a solution iff determinant is non-negative */
-        return (discriminant >= 0 ? (-b - std::sqrt(discriminant)) / (2 * a) : -1);
+        /* Quadratic has a solution iff discriminant is non-negative */
+        return (discriminant_quarter >= 0 ? (-b_half - std::sqrt(discriminant_quarter)) / a : -1);
     }
 };
 
