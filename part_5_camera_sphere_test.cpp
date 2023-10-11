@@ -22,32 +22,23 @@ auto ray_color(const Ray3D &ray) {
                 0.5 * ray.dir.unit_vector().y + 0.5);
 }
 
-void render(Image &img, const Camera &vp) {
-
-    /* Render each pixel */
-    for (ProgressBar<size_t> row(0, img.height(), "Rendering image"); row(); ++row) {
-        for (size_t col = 0; col < img.width(); ++col) {
-            /* Send a ray from the camera through the center of the pixel */
-            auto pixel_center = vp.pixel_center(row, col);
-            Ray3D ray(vp.camera_center, pixel_center - vp.camera_center);
-
-            /* Calculate color for this ray */
-            img[row][col] = ray_color(ray);
-        }
-    }
-}
-
 int main()
 {
     constexpr auto image_width = 400;
     constexpr auto aspect_ratio = 16. / 9.;  /* Very common aspect ratio */
 
+    Camera().set_image_by_width_and_aspect_ratio(image_width, aspect_ratio)
+            .set_viewport_height(2)
+            .render_to(ray_color, "part_5_camera_sphere_test.ppm");
+
+    /* Previous code for reference
     auto img = Image::with_width_and_aspect_ratio(image_width, aspect_ratio);
-    auto vp = Camera::from_height_and_image(2, img);  /* Choose arbitrary viewport height; 2 here */
+    auto vp = Camera::from_height_and_image(2, img);  // Choose arbitrary viewport height; 2 here
 
     render(img, vp);
 
     img.send_as_ppm("part_5_camera_sphere_test.ppm");
+    */
 
     return 0;
 }
