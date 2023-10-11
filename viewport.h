@@ -9,19 +9,19 @@ is projected. The class `Viewport` encapsulates the notion of a viewport along w
 camera/eye point. */
 class Viewport {
 
-    Viewport(double w, double h, const Image &img, const Point3D &camera_center_,
+    Viewport(double w, double h, size_t img_w, size_t img_h, const Point3D &camera_center_,
              double focal_length_)
       : width{w}, height{h},
         /* Right-handed coordinates: The y-axis goes up, the x-axis goes right, the NEGATIVE z-axis
         points from the camera toward the image. Thus, the vector going down the viewport (`y_vec`)
         has a negative y-component. */
         x_vec{width, 0, 0}, y_vec{0, -height, 0},
-        pixel_delta_x{x_vec / static_cast<double>(img.width())},
-        pixel_delta_y{y_vec / static_cast<double>(img.height())},
+        pixel_delta_x{x_vec / static_cast<double>(img_w)},
+        pixel_delta_y{y_vec / static_cast<double>(img_h)},
         camera_center{camera_center_}, focal_length{focal_length_},
         /* The upper left point of the viewport is found by starting at the camera, moving
         `focal_length` units towards the camera (so adding -`focal_length` to the z-coordinate
-        of `camera_center`, due to the use of right-handed coordinates), then subtracintg half the
+        of `camera_center`, due to the use of right-handed coordinates), then subtracting half the
         x- and y- coordinates of `x_vec` and `y_vec`.*/
         upper_left{camera_center + Point3D{0, 0, -focal_length} - x_vec / 2 - y_vec / 2},
         /* Pixels are inset from the edges of the viewport by half the pixel-to-pixel distance.
@@ -57,7 +57,8 @@ public:
         Also note that we must use `img.aspect_ratio()` and not the theoretical desired ratio, because
         the ideal ratio may not be the actual aspect ratio of `img`, because `img.width()` and
         `img.height()` both must be integers. */
-        return Viewport(w, w / img.aspect_ratio(), img, camera_center, focal_length);
+        return Viewport(w, w / img.aspect_ratio(), img.width(), img.height(), camera_center,
+                        focal_length);
     }
 
     static auto from_height_and_image(double h, const Image &img, const Point3D &camera_center = {},
@@ -66,7 +67,18 @@ public:
         Also note that we must use `img.aspect_ratio()` and not the theoretical desired ratio, because
         the ideal ratio may not be the actual aspect ratio of `img`, because `img.width()` and
         `img.height()` both must be integers. */
-        return Viewport(h * img.aspect_ratio(), h, img, camera_center, focal_length);
+        return Viewport(h * img.aspect_ratio(), h, img.width(), img.height(), camera_center,
+                        focal_length);
+    }
+
+    static auto from_height_and_image(double h, const ImagePPMStream &img, const Point3D &camera_center = {},
+                                      double focal_length = 1) {
+        /* Viewport widths less than 1 are ok because they are real-valued, unlike Image widths
+        Also note that we must use `img.aspect_ratio()` and not the theoretical desired ratio, because
+        the ideal ratio may not be the actual aspect ratio of `img`, because `img.width()` and
+        `img.height()` both must be integers. */
+        return Viewport(h * img.aspect_ratio(), h, img.width(), img.height(), camera_center,
+                        focal_length);
     }
 };
 
