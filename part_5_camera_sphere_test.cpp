@@ -1,6 +1,6 @@
 #include "image.h"
 #include "ray3d.h"
-#include "viewport.h"
+#include "camera.h"
 #include "sphere.h"
 
 using namespace std;
@@ -22,7 +22,7 @@ auto ray_color(const Ray3D &ray) {
                 0.5 * ray.dir.unit_vector().y + 0.5);
 }
 
-void render(Image &img, const Viewport &vp) {
+void render(Image &img, const Camera &vp) {
 
     /* Render each pixel */
     for (ProgressBar<size_t> row(0, img.height(), "Rendering image"); row(); ++row) {
@@ -43,11 +43,11 @@ int main()
     constexpr auto aspect_ratio = 16. / 9.;  /* Very common aspect ratio */
 
     auto img = Image::with_width_and_aspect_ratio(image_width, aspect_ratio);
-    auto vp = Viewport::from_height_and_image(2, img);  /* Choose arbitrary viewport height; 2 here */
+    auto vp = Camera::from_height_and_image(2, img);  /* Choose arbitrary viewport height; 2 here */
 
     render(img, vp);
 
-    img.send_as_ppm("part_4_simple_camera_test.ppm");
+    img.send_as_ppm("part_5_camera_sphere_test.ppm");
 
     return 0;
 }

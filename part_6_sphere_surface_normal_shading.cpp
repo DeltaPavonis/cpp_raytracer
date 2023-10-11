@@ -1,6 +1,6 @@
 #include "image.h"
 #include "ray3d.h"
-#include "viewport.h"
+#include "camera.h"
 #include "sphere.h"
 
 using namespace std;
@@ -19,9 +19,9 @@ auto ray_color(const Ray3D &ray) {
 
         /* Use a "common trick" for visualizing surface normals; scale the components of
         the normal to be from 0 to 1, then use the components as the RGB magnitudes.
-        Here, because the radius of the sphere is 0.5, all components of `surf_normal`
-        are from -0.5 to 0.5, so it suffices to add 0.5 to scale them to the range 0 to 1. */
-        // return RGB::from_mag(surf_normal.x + 0.5, surf_normal.y + 0.5, surf_normal.z + 0.5);
+        Here, because `surf_normal` is a unit vector, all components of `surf_normal`
+        are from -1 to 1, so it suffices to add 1 then multiply by 0.5 to scale them to
+        the range 0 to 1. */
         return RGB::from_mag(
             0.5 * (surf_normal.x + 1),
             0.5 * (surf_normal.y + 1),
@@ -36,7 +36,7 @@ auto ray_color(const Ray3D &ray) {
                 0.5 * ray.dir.unit_vector().y + 0.5);
 }
 
-void render(ImagePPMStream &img, const Viewport &vp) {
+void render(ImagePPMStream &img, const Camera &vp) {
 
     /* Render each pixel */
     for (ProgressBar<size_t> row(0, img.height(), "Rendering image"); row(); ++row) {
@@ -62,7 +62,7 @@ int main()
         aspect_ratio,
         "part_6_sphere_surface_normal_shading.ppm"
     );
-    auto vp = Viewport::from_height_and_image(1000, img, {}, 500);  /* Choose arbitrary viewport height; 2 here */
+    auto vp = Camera::from_height_and_image(2, img);  /* Choose arbitrary viewport height; 2 here */
 
     render(img, vp);
 
