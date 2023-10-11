@@ -109,9 +109,11 @@ public:
     auto& set_camera_center(const Point3D &p) {camera_center = p; return *this;}
     /* Sets the focal length (the distance from the camera center to the viewport) to `focal_len`. */
     auto& set_focal_length(double focal_len) {focal_length = focal_len; return *this;}
-    /* Sets the width of the viewport to `width`. */
+    /* Sets the width of the viewport to `width`. The height of the viewport will
+    be inferred later so that the viewport's aspect ratio matches the image's aspect ratio. */
     auto& set_viewport_width(double width) {viewport_w = width; viewport_h = -1; return *this;}
-    /* Sets the height of the viewport to `height`. */
+    /* Sets the height of the viewport to `height`. The width of the viewport will
+    be inferred later so that the viewport's aspect ratio matches the image's aspect ratio. */
     auto& set_viewport_height(double height) {viewport_h = height; viewport_w = -1; return *this;}
     /* Sets the width of the final outputted image to `width`. */
     auto& set_image_width(size_t width) {image_w = width; return *this;}

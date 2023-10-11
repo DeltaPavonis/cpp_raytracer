@@ -31,7 +31,7 @@ struct Sphere : Hittable {
     /* `Sphere::hit_by(ray)` returns a `hit_info` object representing the minimum time of
     intersectino (in the time range (t_min, t_max)) of `ray` with this Sphere. */
     hit_info hit_by(const Ray3D &ray, double t_min = 0,
-                    double t_max = std::numeric_limits<double>::infinity()) const {
+                    double t_max = std::numeric_limits<double>::infinity()) const override {
         
         /* Set up quadratic formula calculation */
         auto origin_to_center = ray.origin - center;
