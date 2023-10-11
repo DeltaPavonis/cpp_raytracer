@@ -12,7 +12,7 @@
 
 /* The `Image` type encapsulates a 2D image as a 2D array of `RGB` pixels. It is appropriate for
 images that need manipulations, because it stores and allows access to all the`RGB` pixels. If you
-only need an image to be sent as PPM to a file, use `ImageStream`. */
+only need an image to be sent as PPM to a file, use `ImagePPMStream`. */
 class Image {
     /* Image width, image height, and the 2D array of `RGB` pixels with that width and height */
     size_t w, h;
@@ -56,7 +56,7 @@ public:
         return Image(width, height);
     }
 
-    /* Creates an ImageStream with width `w` and width-to-height ratio `aspect_ratio` */
+    /* Creates an image with width `w` and width-to-height ratio `aspect_ratio` */
     static auto with_width_and_aspect_ratio(size_t width, double aspect_ratio) {
         auto height = static_cast<size_t>(std::round(static_cast<double>(width) / aspect_ratio));
 
@@ -64,7 +64,7 @@ public:
         return with_dimensions(width, std::max(size_t{1}, height));
     }
 
-    /* Creates an ImageStream with height `h` and width-to-height ratio `aspect_ratio` */
+    /* Creates an image with height `h` and width-to-height ratio `aspect_ratio` */
     static auto with_height_and_aspect_ratio(size_t height, double aspect_ratio) {
         auto width = static_cast<size_t>(std::round(static_cast<double>(height) * aspect_ratio));
 
@@ -113,7 +113,7 @@ public:
     size_t size() const {return w * h;}
     auto aspect_ratio() const {return static_cast<double>(w) / static_cast<double>(h);}
 
-    /* Redirect this `ImageStream` to print to the file `file_name`. Gives an error
+    /* Redirect this `ImagePPMStream` to print to the file `file_name`. Gives an error
     if `file_name` cannot be opened, and gives a warning if the file switch takes
     place in the middle of image printing (meaning the first file will be left with
     an imcomplete PPM image) */
@@ -147,13 +147,13 @@ public:
 
     /* --- NAMED CONSTRUCTORS --- */
 
-    /* Creates an ImageStream with specified width and height, to be printed to the file
+    /* Creates an ImagePPMStream with specified width and height, to be printed to the file
     `file_name` */
     static auto with_dimensions(size_t width, size_t height, const std::string &file_name) {
         return ImagePPMStream(file_name, width, height);
     }
 
-    /* Creates an ImageStream with width `w` and width-to-height ratio `aspect_ratio`, to
+    /* Creates an ImagePPMStream with width `w` and width-to-height ratio `aspect_ratio`, to
     be printed to the file `file_name` */
     static auto with_width_and_aspect_ratio(size_t width, double aspect_ratio,
                                             const std::string &file_name) {
@@ -163,7 +163,7 @@ public:
         return with_dimensions(width, std::max(size_t{1}, height), file_name);
     }
 
-    /* Creates an ImageStream with height `h` and width-to-height ratio `aspect_ratio`,
+    /* Creates an ImagePPMStream with height `h` and width-to-height ratio `aspect_ratio`,
     to be printed to the file `file_name` */
     static auto with_height_and_aspect_ratio(size_t height, double aspect_ratio,
                                              const std::string &file_name) {
