@@ -10,7 +10,7 @@ struct Vec3D {
     double x = 0, y = 0, z = 0;
 
     /* Mathematical negation, +=, -=, *=, /= operators */
-    auto operator-() {return Vec3D{-x, -y, -z};}
+    auto operator-() const {return Vec3D{-x, -y, -z};}
 
     auto& operator+= (const Vec3D &rhs) {x += rhs.x; y += rhs.y; z += rhs.z; return *this;}
     auto& operator-= (const Vec3D &rhs) {x -= rhs.x; y -= rhs.y; z -= rhs.z; return *this;}
