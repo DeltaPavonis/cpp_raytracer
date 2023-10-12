@@ -1,7 +1,6 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include <limits>
 #include "hittable.h"
 #include "vec3d.h"
 #include "ray3d.h"
@@ -59,11 +58,8 @@ struct Sphere : Hittable {
         }
 
         auto hit_point = ray(root);  /* Evaluate this once */
-        return hit_info {
-            .t = root,
-            .hit_point = hit_point,
-            .surface_normal = (hit_point - center).unit_vector()
-        };
+        auto outward_normal = (hit_point - center) / radius;
+        return hit_info(root, hit_point, outward_normal, ray);
     }
 
     Sphere(const Point3D &center_, double radius_) : center{center_}, radius{radius_} {}

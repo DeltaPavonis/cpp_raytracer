@@ -9,7 +9,7 @@ auto ray_color(const Ray3D &ray) {
 
     /* Add a sphere with center (0, 0, -1) (one unit directly in front of the camera center),
     and radius 0.5, SHADED BY SURFACE NORMALS. */
-    if (auto t = Sphere(Point3D{0, 0, -1}, 0.5).hit_by(ray).t; t >= 0) {
+    if (auto t = Sphere(Point3D{0, 0, -1}, 0.5).hit_by(ray).hit_time; !std::isinf(t)) {
 
         /* The surface normal at the point P on a sphere S is simply the unit vector with the same
         direction as P - S.center (the vector from the center of the sphere to P). Note that P - S.center
