@@ -34,10 +34,10 @@ int main()
 
     world.add(std::make_shared<Sphere>(Point3D{0, 0, -1}, 0.5));
     world.add(std::make_shared<Sphere>(Point3D{0, -100.5, -1}, 100));
-    // world.add(std::make_shared<Sphere>(Point3D{0, 0.15, -0.5}, 0.3));
 
     Camera().set_image_by_width_and_aspect_ratio(image_width, aspect_ratio)
             .set_viewport_height(2)
+            .set_samples_per_pixel(100)  /* Now with anti-aliasing */
             .render_to(ray_color, "part_6_2_basic_scene_test.ppm");
 
     return 0;

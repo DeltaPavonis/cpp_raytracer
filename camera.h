@@ -1,7 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "vec3d.h"
+#include "rand_util.h"
 #include "image.h"
 #include "ray3d.h"
 
@@ -62,9 +62,33 @@ class Camera {
         upper_left_corner = camera_center + Point3D{0, 0, -focal_length} - x_vec / 2 - y_vec / 2;
 
         /* Pixels are inset from the edges of the camera by half the pixel-to-pixel distance.
-        This ensures that the viewpoint area is evenly divided into `pixel_delta_x`-times-
+        This ensures that the viewpoint area is evenly divided into `pixel_delta_x` by
         `pixel_delta_y`-sized regions. */
         pixel00_loc = upper_left_corner + pixel_delta_x / 2 + pixel_delta_y / 2;
+    }
+
+    /* Returns a ray from `camera_center` through a random point in the square region centered at
+    the pixel in row `row` and column `col`. Note that the region is square because it is a
+    rectangle with width |`pixel_delta_x`| and height |`pixel_delta_y`|, and we have `pixel_delta_x`
+    = `x_vec` / `image_w` = `viewport_w` / `image_w`, and `pixel_delta_y` = `y_vec` / `image_h`
+    = `viewport_h` / `image_h`. Then, `viewport_w` / `image_w` = `viewport_h` / `image_h` because
+    `viewport_w` / `viewport_h` = `image_w` / `image_h` (as the aspect ratio of the viewport is
+    equal to the aspect ratio of the image).
+    
+    Then why do we need both `pixel_delta_x` and `pixel_delta_y`? I think it's for clarity. */
+    auto random_ray_through_pixel(size_t row, size_t col) {
+
+        /* Find the center of the pixel */
+        auto pixel_center = pixel00_loc + static_cast<double>(row) * pixel_delta_y
+                          + static_cast<double>(col) * pixel_delta_x;
+        
+        /* Find a random point in the square region centered at `pixel_center`. The region
+        has width `pixel_delta_x` and height `pixel_delta_y`, so a random point in this
+        region is found by adding `pixel_delta_x` and `pixel_delta_y` each multiplied by
+        a random real number in the range [-0.5, 0.5]. */
+        auto pixel_sample = pixel_center + rand_double(-0.5, 0.5) * pixel_delta_x
+                          + rand_double(-0.5, 0.5) * pixel_delta_y;
+        return Ray3D(camera_center, pixel_sample -camera_center);
     }
 
 public:
@@ -79,29 +103,39 @@ public:
         for (size_t row = 0; row < image_h; ++row) {
             for (size_t col = 0; col < image_w; ++col) {
 
-                /* Find `ray`, the ray from the camera through the center of the current pixel */
-                auto pixel_center = pixel00_loc + pixel_delta_x * static_cast<double>(col)
-                                  + pixel_delta_y * static_cast<double>(row);
-                Ray3D ray(camera_center, pixel_center - camera_center);
+                /* Shoot `samples_per_pixel` random rays through the current pixel.
+                The average of the resulting colors will be the color for this pixel. */
+                RGB pixel_color{};
+                for (size_t sample = 0; sample < samples_per_pixel; ++sample) {
+                    auto ray = random_ray_through_pixel(row, col);
+                    pixel_color += ray_color(ray);
+                }
+                pixel_color /= static_cast<double>(samples_per_pixel);
 
-                img.add(ray_color(ray));
+                img.add(pixel_color);
              }
         }
     }
 
-    Image render() {
+    Image render(const auto &ray_color) {
         init();
 
         /* Calculate and store the color of each pixel */
         auto img = Image::with_dimensions(image_w, image_h);
         for (size_t row = 0; row < image_h; ++row) {
             for (size_t col = 0; col < image_w; ++col) {
-                auto pixel_center = pixel00_loc + pixel_delta_x * static_cast<double>(col)
-                                  + pixel_delta_y * static_cast<double>(row);
-                Ray3D through_pixel_center(camera_center, pixel_center - camera_center);
 
-                img[row][col] = RGB{};
-            }
+                /* Shoot `samples_per_pixel` random rays through the current pixel.
+                The average of the resulting colors will be the color for this pixel. */
+                RGB pixel_color{};
+                for (size_t sample = 0; sample < samples_per_pixel; ++sample) {
+                    auto ray = random_ray_through_pixel(row, col);
+                    pixel_color += ray_color(ray);
+                }
+                pixel_color /= static_cast<double>(samples_per_pixel);
+
+                img[row][col] = pixel_color;
+             }
         }
         return img;
     }

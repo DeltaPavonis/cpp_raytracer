@@ -10,7 +10,8 @@ class RGB {
 
 public:
 
-    /* Real-valued red, green, and blue components (each ranging from 0.0 to 1.0) */
+    /* Real-valued red, green, and blue components, each ranging from 0.0 to 1.0
+    (if representing a valid color). */
     double r, g, b;
     
     /* --- NAMED CONSTRUCTORS --- */
@@ -37,6 +38,11 @@ public:
     static RGB from_rgb(double val, double max_magnitude = 255) {
         return from_rgb(val, val, val, max_magnitude);
     }
+
+    /* Mathematical operators (since anti-aliasing requires finding the average of
+    multiple colors, so we need += and /=) */
+    auto& operator+= (const RGB &rhs) {r += rhs.r; g += rhs.g; b += rhs.b; return *this;}
+    auto& operator/= (double d) {r /= d; g /= d; b /= d; return *this;}
 
     /* Returns this `RGB` object as a string.
     `delimiter`: What is printed between the red, green, and blue components. A space by default.
