@@ -6,7 +6,7 @@
 #include "hittable.h"
 
 class Scene : public Hittable {
-    std::vector<std::shared_ptr<Hittable>> objects;
+    std::vector<std::shared_ptr<Hittable>> objects{};
 
 public:
 
@@ -23,7 +23,11 @@ public:
 
         hit_info result;
         auto min_hit_time = t_max;
+
         for (const auto &object : objects) {
+
+            /* Update `result` and `min_hit_time` if the `ray` hits the current object
+            in the time range before `min_hit_time` (the range (`t_min`, `min_hit_time`))*/
             if (auto curr = object->hit_by(ray, t_min, min_hit_time); curr) {
                 result = curr;
                 min_hit_time = curr.hit_time;
