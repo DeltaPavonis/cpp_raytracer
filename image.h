@@ -179,7 +179,7 @@ public:
         } else {  /* Warn user if some pixel(s) are missing (were not `add`ed) */
             std::cout << "Warning: ImagePPMStream to \"" << file << "\" incomplete; " << curr_index
                       << " out of " << "(" << w << " * " << h << ") = " << w * h
-                      << " RGB strings printed" << std::endl;
+                      << " RGB strings printed at time of destruction" << std::endl;
         }
     }
 };

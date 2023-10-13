@@ -3,6 +3,7 @@
 
 #include "vec3d.h"
 #include "image.h"
+#include "ray3d.h"
 
 /* The class `Camera` encapsulates the notion of a camera viewing a 3D scene from
 a designated camera/eye point, located a certain length (called the focal length)
@@ -27,6 +28,8 @@ class Camera {
     /* Coordinates of the upper left corner of the viewport, and the coordinates of the
     topmost and leftmost image pixel */
     Point3D upper_left_corner{}, pixel00_loc{};
+    /* Number of rays sampled per pixel */
+    size_t samples_per_pixel = 1;
 
     /* Set the values of `viewport_w`, `viewport_h`, `pixel_delta_x`, `pixel_delta_y`,
     `upper_left_corner`, and `pixel00_loc` based on `image_w` and `image_h`. This function
@@ -68,7 +71,7 @@ public:
 
     /* NOTE: `render_to` just takes the function `ray_color` as a parameter for now, because
     `hittable` has not been fully implemented. */
-    void render_to(const auto &ray_color, const std::string &file_name, bool antialias = true) {
+    void render_to(const auto &ray_color, const std::string &file_name) {
         init();
 
         /* Calculate color of each pixel and write it to the file */
@@ -82,11 +85,11 @@ public:
                 Ray3D ray(camera_center, pixel_center - camera_center);
 
                 img.add(ray_color(ray));
-            }
+             }
         }
     }
 
-    Image render(bool antialias = true) {
+    Image render() {
         init();
 
         /* Calculate and store the color of each pixel */
@@ -139,6 +142,8 @@ public:
         /* Make sure width is at least 1 */
         return set_image_dimensions(std::max(size_t{1}, width), height);
     }
+    /* Sets the number of rays sampled for each pixel to `rays_per_pixel_`. */
+    auto& set_samples_per_pixel(size_t samples) {samples_per_pixel = samples; return *this;}
 };
 
 #endif
