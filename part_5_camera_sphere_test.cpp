@@ -3,8 +3,6 @@
 #include "camera.h"
 #include "sphere.h"
 
-using namespace std;
-
 /* Create a blue-to-white gradient depending on the ray's y-coordinate; bluer for lesser
 y-coordinates and whiter for larger y-coordinates (so bluer at the top and whiter at the bottom). */
 auto ray_color(const Ray3D &ray) {
