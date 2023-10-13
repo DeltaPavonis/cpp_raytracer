@@ -29,8 +29,8 @@ struct Sphere : Hittable {
 
     /* `Sphere::hit_by(ray)` returns a `hit_info` object representing the minimum time of
     intersectino (in the time range (t_min, t_max)) of `ray` with this Sphere. */
-    hit_info hit_by(const Ray3D &ray, double t_min = 0,
-                    double t_max = std::numeric_limits<double>::infinity()) const override {
+    hit_info hit_by(const Ray3D &ray,
+                    const Interval &ray_times = Interval::nonnegative()) const override {
         
         /* Set up quadratic formula calculation */
         auto origin_to_center = ray.origin - center;
@@ -46,12 +46,12 @@ struct Sphere : Hittable {
         auto discriminant_quarter_sqrt = std::sqrt(discriminant_quarter);  /* Evaluate this once */
         auto root = (-b_half - discriminant_quarter_sqrt) / a;  /* Check smaller root first*/
 
-        if (!(t_min < root && root < t_max)) {
+        if (!ray_times.surrounds(root)) {
 
             /* Smaller root not in (t_min, t_max), try the other root */
             root = (-b_half + discriminant_quarter_sqrt) / a;
 
-            if (!(t_min < root && root < t_max)) {
+            if (!ray_times.surrounds(root)) {
                 /* No root in the range (t_min, t_max), return {} */
                 return {};
             }

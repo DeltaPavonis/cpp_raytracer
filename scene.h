@@ -18,17 +18,17 @@ public:
     }
 
     /* Return the `hit_info` from the closest object hit by the 3D ray `ray` */
-    hit_info hit_by(const Ray3D &ray, double t_min = 0,
-                double t_max = std::numeric_limits<double>::infinity()) const override {
+    hit_info hit_by(const Ray3D &ray,
+                    const Interval &ray_times = Interval::nonnegative()) const override {
 
         hit_info result;
-        auto min_hit_time = t_max;
+        auto min_hit_time = ray_times.max;
 
         for (const auto &object : objects) {
 
             /* Update `result` and `min_hit_time` if the `ray` hits the current object
             in the time range before `min_hit_time` (the range (`t_min`, `min_hit_time`))*/
-            if (auto curr = object->hit_by(ray, t_min, min_hit_time); curr) {
+            if (auto curr = object->hit_by(ray, Interval(ray_times.min, min_hit_time)); curr) {
                 result = curr;
                 min_hit_time = curr.hit_time;
             }

@@ -4,6 +4,7 @@
 #include <limits>
 #include <cmath>
 #include "ray3d.h"
+#include "interval.h"
 
 struct hit_info {
     /*
@@ -57,7 +58,7 @@ struct Hittable {
     /* Check if the object is hit by a ray in the time range (t_min, t_max).
     = 0 causes `hit_by` to be a pure virtual function, and so `Hittable` is an abstract
     class, which means it itself cannot be instantiated (good, it's only an interface). */
-    virtual hit_info hit_by(const Ray3D &ray, double t_min, double t_max) const = 0;
+    virtual hit_info hit_by(const Ray3D &ray, const Interval &ray_times) const = 0;
 
     virtual ~Hittable() = default;
 };
