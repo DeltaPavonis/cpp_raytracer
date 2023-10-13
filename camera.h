@@ -100,7 +100,7 @@ public:
 
         /* Calculate color of each pixel and write it to the file */
         auto img = ImagePPMStream::with_dimensions(image_w, image_h, file_name);
-        for (size_t row = 0; row < image_h; ++row) {
+        for (ProgressBar<size_t> row(0, image_h, "Rendering to " + file_name); row(); ++row) {
             for (size_t col = 0; col < image_w; ++col) {
 
                 /* Shoot `samples_per_pixel` random rays through the current pixel.
@@ -122,7 +122,7 @@ public:
 
         /* Calculate and store the color of each pixel */
         auto img = Image::with_dimensions(image_w, image_h);
-        for (size_t row = 0; row < image_h; ++row) {
+        for (ProgressBar<size_t> row(0, image_h, "Rendering"); row(); ++row) {
             for (size_t col = 0; col < image_w; ++col) {
 
                 /* Shoot `samples_per_pixel` random rays through the current pixel.

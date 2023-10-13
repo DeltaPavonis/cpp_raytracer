@@ -58,7 +58,7 @@ struct ProgressBar {
         return ret;
     }
 
-    /* Updates/prints the progress bar, and returns `true` if the loop is over */
+    /* Updates/prints the progress bar, and returns `true` if the loop is NOT over */
     bool operator() () {
         unsigned curr_percent = static_cast<unsigned>(100 * (curr - beg) / (end - beg));
         if (curr_percent > last_percent) {
