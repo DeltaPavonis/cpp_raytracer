@@ -42,6 +42,7 @@ public:
     /* Mathematical operators (since anti-aliasing requires finding the average of
     multiple colors, so we need += and /=) */
     auto& operator+= (const RGB &rhs) {r += rhs.r; g += rhs.g; b += rhs.b; return *this;}
+    auto& operator*= (double d) {r *= d; g *= d; b *= d; return *this;}
     auto& operator/= (double d) {r /= d; g /= d; b /= d; return *this;}
 
     /* Returns this `RGB` object as a string.
@@ -65,6 +66,10 @@ public:
     /* Default constructor sets `r` = `g` = `b` = 0. */
     RGB() : r{0}, g{0}, b{0} {}
 };
+
+/* Mathematical utility functions */
+auto operator* (const RGB &a, double d) {auto ret = a; ret *= d; return ret;}
+auto operator* (double d, const RGB &a) {return a * d;}
 
 /* Returns a color linearly interpolated, with a proportion of `1 - d` of `a` and
 a proportion of `d` of `b`. */
