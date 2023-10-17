@@ -6,7 +6,7 @@
 #include "ray3d.h"
 
 /* A sphere in 3D space is represented by its center and its radius. */
-struct Sphere : Hittable {
+struct Sphere : public Hittable {
     Point3D center;
     double radius;
 
@@ -16,7 +16,7 @@ struct Sphere : Hittable {
     there exists some t for which (P(t) - C) dot (P(t) - C) = R^2; if we can find a solution to
     the equation ((A + tb) - C) dot ((A + tb) - C) = R^2. Grouping the t's, rearranging, and
     expanding, we find that t^2(b dot b) + 2tb dot (A - C) + (A - C) dot (A - C) - r^2 = 0.
-    This is a quadratic in t; ax^2 + bx + c = 0, where
+    This is a quadratic in t; at^2 + bt + c = 0, where
     a = b dot b
     b = 2b dot (A - C)
     c = (A - C) dot (A - C) - r^2
@@ -28,40 +28,40 @@ struct Sphere : Hittable {
     drawn). We will fix this in the future. */
 
     /* `Sphere::hit_by(ray)` returns a `hit_info` object representing the minimum time of
-    intersectino (in the time range (t_min, t_max)) of `ray` with this Sphere. */
+    intersection in the time range specified by `ray_times`, of `ray` with this Sphere. */
     hit_info hit_by(const Ray3D &ray,
                     const Interval &ray_times = Interval::nonnegative()) const override {
         
         /* Set up quadratic formula calculation */
-        auto origin_to_center = ray.origin - center;
+        auto center_to_origin = ray.origin - center;
         auto a = dot(ray.dir, ray.dir);
-        auto b_half = dot(ray.dir, origin_to_center);
-        auto c = dot(origin_to_center, origin_to_center) - radius * radius;
+        auto b_half = dot(ray.dir, center_to_origin);
+        auto c = dot(center_to_origin, center_to_origin) - radius * radius;
         auto discriminant_quarter = b_half * b_half - a * c;
 
         /* Quadratic has no solutions whenever the discriminant is negative */
         if (discriminant_quarter < 0) {return {};}
 
-        /* If the quadratic has solutions, find the smallest one in the range (t_min, t_max) */
+        /* If the quadratic has solutions, find the smallest one in the range `ray_times` */
         auto discriminant_quarter_sqrt = std::sqrt(discriminant_quarter);  /* Evaluate this once */
-        auto root = (-b_half - discriminant_quarter_sqrt) / a;  /* Check smaller root first*/
+        auto root = (-b_half - discriminant_quarter_sqrt) / a;  /* Check smaller root first */
 
-        if (!ray_times.surrounds(root)) {
+        if (!ray_times.contains_exclusive(root)) {
 
-            /* Smaller root not in (t_min, t_max), try the other root */
+            /* Smaller root not in the range `ray_times`, try the other root */
             root = (-b_half + discriminant_quarter_sqrt) / a;
-
-            if (!ray_times.surrounds(root)) {
-                /* No root in the range (t_min, t_max), return {} */
+            if (!ray_times.contains_exclusive(root)) {
+                /* No root in the range `ray_times`, return {} */
                 return {};
             }
         }
 
         auto hit_point = ray(root);  /* Evaluate this once */
-        auto outward_normal = (hit_point - center) / radius;
-        return hit_info(root, hit_point, outward_normal, ray);
+        auto outward_unit_normal = (hit_point - center) / radius;
+        return hit_info(root, hit_point, outward_unit_normal, ray);
     }
 
+    /* Constructs a Sphere with the center `center_` and the radius `radius_`. */
     Sphere(const Point3D &center_, double radius_) : center{center_}, radius{radius_} {}
 };
 

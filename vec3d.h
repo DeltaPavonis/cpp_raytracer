@@ -67,7 +67,7 @@ auto cross(const Vec3D &a, const Vec3D &b) {
 }
 
 /* Overload operator<< to allow printing `Vec3D`s to output streams */
-std::ostream& operator<<(std::ostream& os, const Vec3D &v) {
+std::ostream& operator<< (std::ostream& os, const Vec3D &v) {
     os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
     return os;
 }
