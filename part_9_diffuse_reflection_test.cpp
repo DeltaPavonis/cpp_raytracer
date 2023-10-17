@@ -43,7 +43,7 @@ int main()
     Camera().set_image_by_width_and_aspect_ratio(image_width, aspect_ratio)
             .set_viewport_height(2)
             .set_samples_per_pixel(50)  /* Now with anti-aliasing */
-            .render_to(ray_color, "part_9_diffuse_reflection_test.ppm");
+            .render_to(ray_color, "part_9_diffuse_reflection_test_without_shadow_acne.ppm");
 
     return 0;
 }
