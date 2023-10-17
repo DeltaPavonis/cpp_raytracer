@@ -18,9 +18,9 @@ struct Interval {
     double min, max;
 
     /* Returns `true` if `d` is in the INCLUSIVE range [min, max]. */
-    bool contains(double d) const {return min <= d && d <= max;}
+    bool contains_inclusive(double d) const {return min <= d && d <= max;}
     /* Returns `true` if `d` is in the EXCLUSIVE range (min, max). */
-    bool surrounds(double d) const {return min < d && d < max;}
+    bool contains_exclusive(double d) const {return min < d && d < max;}
     /* Returns the value of `d` when it is clamped to the range [min, max]. */
     auto clamp(double d) const {return (d <= min ? min : (d >= max ? max : d));}
 
@@ -32,6 +32,12 @@ struct Interval {
 
     /* Returns the interval of all non-negative integers: [0, DOUBLE_INF). */
     static auto nonnegative() {return Interval(0, DOUBLE_INF);}
+
+    /* Returns the interval with minimum `min_` and maximum `DOUBLE_INF`. */
+    static auto with_min(double min_) {return Interval(min_, DOUBLE_INF);}
+
+    /* Returns the interval with maximum `max_` and minimum `-DOUBLE_INF`. */
+    static auto with_max(double max_) {return Interval(-DOUBLE_INF, max_);}
 
     /* Returns the interval of all real numbers */
     static auto universe() {return Interval(-DOUBLE_INF, DOUBLE_INF);}
