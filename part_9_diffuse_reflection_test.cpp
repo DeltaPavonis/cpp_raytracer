@@ -17,10 +17,11 @@ auto ray_color(const Ray3D &ray) {
                     0.5 * ray.dir.unit_vector().y + 0.5);
     }
 
-    /* Otherwise, the ray does hit an object. Here, we assume that all objects are diffuse
-    objects, and so the ray will be reflected in a random directionoff the surface of the
-    sphere (all objects are spheres here). */
-    auto reflected_direction = Vec3D::random_unit_vector_on_hemisphere(info.surface_normal);
+    /* Otherwise, the ray does hit an object. By true Lambertian reflectance, the ray will
+    be reflected at an angle of phi off the surface normal with a probability of cos(phi).
+    This is equivalent to saying that the endpoint of the ray is a random point on the
+    unit sphere centered at the endpoint of the unit surface normal. */
+    auto reflected_direction = info.surface_normal + Vec3D::random_unit_vector();
     /* Albedo = proportion of light reflected = 1 - proportion of light absorbed. The higher
     the albedo, the whiter the color; an albedo of 1 is pure white, and an albedo of 0 is black.
     Setting 0.5 gives a dark-grayish color (which is actually darker than expected; we will learn
@@ -43,7 +44,7 @@ int main()
     Camera().set_image_by_width_and_aspect_ratio(image_width, aspect_ratio)
             .set_viewport_height(2)
             .set_samples_per_pixel(50)  /* Now with anti-aliasing */
-            .render_to(ray_color, "part_9_diffuse_reflection_test_without_shadow_acne.ppm");
+            .render_to(ray_color, "part_9_diffuse_reflection_test_true_lambertian.ppm");
 
     return 0;
 }
