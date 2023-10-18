@@ -47,9 +47,9 @@ struct Sphere : public Hittable {
         auto root = (-b_half - discriminant_quarter_sqrt) / a;  /* Check smaller root first */
 
         if (!ray_times.contains_exclusive(root)) {
-
             /* Smaller root not in the range `ray_times`, try the other root */
             root = (-b_half + discriminant_quarter_sqrt) / a;
+
             if (!ray_times.contains_exclusive(root)) {
                 /* No root in the range `ray_times`, return {} */
                 return {};
@@ -59,18 +59,16 @@ struct Sphere : public Hittable {
         /* Shadow acne occurs when `hit_time` is a little too large; that causes `hit_point`
         to be inside the Sphere, and so the next reflected ray will hit the inside of the sphere
         at a very small time and then continue to bounce off the inside of the sphere over and
-        over. I fix this in a different method from the book: I decrease the hit time by a small
-        amount (1e-9) to ensure that `hit_point` never goes through the surface of the Sphere.
-        If decreasnig the hit time by that amount makes it go below some threshold (1e-12 here),
-        I bound it at that threshold. */
-        root = std::max(root - 1e-9, 1e-12);
+        over. I fix this in a different method from the book: I decrease the hit time. Specifically,
+        if `hit_time` > 1e-10, I simply subtract 1e-10 from it, and otherwise I halve it. */
+        root = (root > 1e-10 ? root - 1e-10 : root / 2);
 
         auto hit_point = ray(root);  /* Evaluate this once */
         auto outward_unit_normal = (hit_point - center) / radius;
         return hit_info(root, hit_point, outward_unit_normal, ray);
     }
 
-    /* Constructs a Sphere with the center `center_` and the radius `radius_`. */
+    /* Constructs a Sphere with center `center_` and radius `radius_` */
     Sphere(const Point3D &center_, double radius_) : center{center_}, radius{radius_} {}
 };
 
