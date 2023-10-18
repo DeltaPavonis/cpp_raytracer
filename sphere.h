@@ -62,9 +62,11 @@ struct Sphere : public Hittable {
         /* Shadow acne occurs when `hit_time` is a little too large; that causes `hit_point`
         to be inside the Sphere, and so the next reflected ray will hit the inside of the sphere
         at a very small time and then continue to bounce off the inside of the sphere over and
-        over. I fix this in a different method from the book: I decrease the hit time. Specifically,
-        if `hit_time` > 1e-10, I simply subtract 1e-10 from it, and otherwise I halve it. */
-        root = (root > 1e-10 ? root - 1e-10 : root / 2);
+        over. I fix this in a different method from the book: the book ignores small hit times,
+        and I just decrease the hit time. Specifically, if `hit_time` > 1e-8, I simply subtract
+        1e-8 from it, and otherwise I halve it. This ensures that `hit_point` will not be inside
+        this Sphere. */
+        root = (root > 1e-8 ? root - 1e-8 : root / 2);
 
         auto hit_point = ray(root);  /* Evaluate this once */
         auto outward_unit_normal = (hit_point - center) / radius;
