@@ -96,4 +96,34 @@ public:
                                                           fuzz_factor{std::min(fuzz, 1.)} {}
 };
 
+class Dielectric : public Material {
+
+    /* `refr_index` = The refractive index of this dielectric surface */
+    double refr_index;
+
+public:
+
+    scatter_info scatter(const Ray3D &ray, const hit_info &info) const override {
+
+        /* If the ray hits this dielectric from the outside, then it is transitioning from
+        air (refractive index assumed to be 1) to the current object, so the ratio is 1 / ri.
+        Otherwise, if the ray hits this dielectric from the inside, then it is transitioning from
+        the current object to air, so the ratio is the reciprocal ri / 1. */
+        auto refractive_index_ratio = (info.hit_from_outside ? 1. / refr_index : refr_index / 1.);
+        auto unit_dir = ray.dir.unit_vector();
+
+        auto refracted_dir = refracted(unit_dir, info.unit_surface_normal, refractive_index_ratio);
+
+        /* Attenuance is just (1, 1, 1); color is not lost when moving through (or reflecting
+        off of) a Dielectric material apparently. The tutorial says "Attenuation is always 1"
+        because a glass surface absorbs nothing. Makes sense, but does this hold for ALL
+        dielectric surfaces? Maybe for tinted glass it doesn't, but our current implementation
+        of Dielectric doesn't have a field for intrinsic color or tint. */
+        return scatter_info(Ray3D(info.hit_point, refracted_dir), RGB::from_mag(1, 1, 1));
+    }
+
+    /* Constructs a dielectric reflector with refractive index `refractive_index`. */
+    Dielectric(double refractive_index) : refr_index{refractive_index} {}
+};
+
 #endif

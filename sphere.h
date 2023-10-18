@@ -65,8 +65,14 @@ struct Sphere : public Hittable {
         over. I fix this in a different method from the book: the book ignores small hit times,
         and I just decrease the hit time. Specifically, if `hit_time` > 1e-8, I simply subtract
         1e-8 from it, and otherwise I halve it. This ensures that `hit_point` will not be inside
-        this Sphere. */
-        root = (root > 1e-8 ? root - 1e-8 : root / 2);
+        this Sphere.
+        
+        Fix has been disabled for now in favor of the book's fix (which is to make `ray_times`
+        the interval (some small constant, inf) instead of (0, inf)). My fix, which was to shift
+        the hit point back along the original ray, results in rays never being able to go inside
+        Spheres. This is bad because for rays that are refracted (for Dielectric spheres), they
+        need to go inside. */
+        // root = (root > 1e-8 ? root - 1e-8 : root / 2);
 
         auto hit_point = ray(root);  /* Evaluate this once */
         auto outward_unit_normal = (hit_point - center) / radius;

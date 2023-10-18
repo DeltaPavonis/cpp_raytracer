@@ -101,6 +101,30 @@ auto reflected(const Vec3D &v, const Vec3D &unit_normal) {
     return v - 2 * dot(v, unit_normal) * unit_normal;
 }
 
+/* Returns the direction that results when the UNIT vector `unit_vec` is refracted; specifically,
+`univ_vec` is some unit vector, `unit_normal` is an unit normal POINTING ON `unit_vec`'s SIDE
+OF THE INTERFACE (the line of intersection), and `refractive_index_ratio` is the ratio of the
+refractive index of the initial medium and the final medium.
+
+For instance, if going from a refractive index of 1.5 to a refractive index of 2,
+`refractive_index_ratio` should be set to 1.5 / 2 = 0.75. */
+auto refracted(const Vec3D &unit_vec, const Vec3D &unit_normal, double refractive_index_ratio) {
+    /* Use Snell's Law to compute the direction of the unit vector `v` after transitioning
+    from a medium with refractive index x to a medium with refractive index y, where
+    `refractive_index_ratio` = x / y. */
+
+    /* Use `std::fmin` to bound `cos_theta` from above by 1., just in case a floating-point
+    inaccuracy occurs which makes it a little greater than 1. */
+    auto cos_theta = std::fmin(dot(-unit_vec, unit_normal), 1.);
+
+    /* Individually compute the components of the resulting vector that are perpendicular
+    and parallel to the surface normal on the side of the final medium, and then sum them
+    to get the resulting vector. */
+    auto v_out_perp = refractive_index_ratio * (unit_vec + cos_theta * unit_normal);
+    auto v_out_para = -std::sqrt(std::fabs(1 - v_out_perp.mag_squared())) * unit_normal;
+    return v_out_perp + v_out_para;
+}
+
 /* `Point3D` is a type alias for `Vec3D`, declared to improve clarity in the code */
 using Point3D = Vec3D;
 
