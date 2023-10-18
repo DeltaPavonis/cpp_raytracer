@@ -66,26 +66,32 @@ public:
 class Metal : public Material {
     /* `intrinsic_color` = The color intrinsic to this metal */
     RGB intrinsic_color;
+    double fuzz_factor;
 
 public:
 
     scatter_info scatter(const Ray3D &ray, const hit_info &info) const override {
 
         /* Unlike Lambertian reflectors, metals display specular reflection; the incident
-        light ray is reflected about the surface normal.
-        
-        The tutorial normalizes `ray.dir` before passing it to reflected. Not sure why. I
-        leave it out and I don't see a difference. */
-        auto scattered_direction = reflected(ray.dir.unit_vector(), info.surface_normal);
+        light ray is reflected about the surface normal. */
+        auto reflected_unit_dir = reflected(ray.dir.unit_vector(), info.surface_normal);
+        /* To simulate fuzzy reflection off metal surfaces, the end point is chosen randomly
+        off the sphere with radius `fuzz_factor` centered at the endpoint of `reflected_unit_dir`.
+        Thus, `fuzz_factor` = 0 results in perfect specular (perfectly mirror-like) reflection.
+        Note that this is why `reflected_unit_dir` is made an unit vector (and so it is why
+        `ray.dir` is normalized before being passed to `reflected`; it's to ensure every direction
+        of reflection has the same probability, just like in Lambertian reflectors). */
+        auto scattered_dir = reflected_unit_dir + fuzz_factor * Vec3D::random_unit_vector();
 
         /* The scattered ray goes from the original ray's hit point to the randomly-chosen point
         on the unit sphere centered at the unit surface normal's endpoint, and the attenuation
         is the same as the intrinsic color. */
-        return scatter_info(Ray3D(info.hit_point, scattered_direction), intrinsic_color);
+        return scatter_info(Ray3D(info.hit_point, scattered_dir), intrinsic_color);
     }
 
     /* Constructs a metal (specular) reflector with intrinsic color `intrinsic_color_`. */
-    Metal(const RGB &intrinsic_color_) : intrinsic_color{intrinsic_color_} {}
+    Metal(const RGB &intrinsic_color_, double fuzz = 0) : intrinsic_color{intrinsic_color_},
+                                                          fuzz_factor{std::min(fuzz, 1.)} {}
 };
 
 #endif

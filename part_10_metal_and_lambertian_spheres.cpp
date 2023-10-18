@@ -32,12 +32,9 @@ int main()
 
     auto material_for_ground = std::make_shared<Lambertian>(RGB::from_mag(0.8, 0.8, 0));
     auto material_for_center = std::make_shared<Lambertian>(RGB::from_mag(0.7, 0.3, 0.3));
-    auto material_for_left   = std::make_shared<Metal>(RGB::from_mag(0.8, 0.8, 0.8));
-    auto material_for_right  = std::make_shared<Metal>(RGB::from_mag(0.8, 0.6, 0.2));
-
-    /* Original scene */
-    // world.add(std::make_shared<Sphere>(Point3D{0, 0, -1}, 0.5, material_for_center));
-    // world.add(std::make_shared<Sphere>(Point3D{0, -100.5, -1}, 100, material_for_ground));
+    /* Test fuzziness factors of 0.25 and 0.75 on the left and right spheres, respectively */
+    auto material_for_left   = std::make_shared<Metal>(RGB::from_mag(0.8, 0.8, 0.8), 0.25);
+    auto material_for_right  = std::make_shared<Metal>(RGB::from_mag(0.8, 0.6, 0.2), 0.75);
 
     world.add(make_shared<Sphere>(Point3D( 0.0, -100.5, -1.0), 100.0, material_for_ground));
     world.add(make_shared<Sphere>(Point3D( 0.0,    0.0, -1.0),   0.5, material_for_center));
@@ -47,7 +44,7 @@ int main()
     Camera().set_image_by_width_and_aspect_ratio(image_width, aspect_ratio)
             .set_viewport_height(2)
             .set_samples_per_pixel(50)  /* Now with anti-aliasing */
-            .render_to(ray_color, "part_10_metal_and_lambertian_spheres.ppm");
+            .render_to(ray_color, "part_10_metal_and_lambertian_spheres_with_fuzzy_reflection.ppm");
 
     return 0;
 }
