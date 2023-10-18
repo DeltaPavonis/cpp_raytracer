@@ -25,6 +25,11 @@ struct Vec3D {
     /* Compute unit vector (forward declared) */
     Vec3D unit_vector() const;
 
+    /* Check if all three components less than `epsilon` */
+    auto near_zero(double epsilon = 1e-8) {
+        return (fabs(x) < epsilon) && (fabs(y) < epsilon) && (fabs(z) < epsilon);
+    }
+
     /* Generate random vector (by default, generates a vector with all components in [0, 1]) */
     static auto random(double min = 0, double max = 1) {
         return Vec3D{rand_double(min, max), rand_double(min, max), rand_double(min, max)};
@@ -82,6 +87,18 @@ auto Vec3D::random_unit_vector_on_hemisphere(const Vec3D &surface_normal) {
     /* If the angle between `result` and the surface normal is less than 90 degrees,
     then `result` points in the correct hemisphere; that is, out of the surface. */
     return (dot(surface_normal, result) > 0 ? result : -result);
+}
+
+/* Returns the vector that is the vector `v` reflected across the unit normal vector
+`unit_normal`. */
+auto reflected(const Vec3D &v, const Vec3D &unit_normal) {
+    /* Let the endpoint of `v` coincide with the origin of `unit_normal`. Then observe
+    that the reflected vector is equivalent to `2*v - 2*b`, where `b` is the vector
+    parallel to `unit_normal` with magnitude `|v|cos(theta)`, where `theta` is the angle
+    between `v` and `unit_normal`. Now, observe that `|v|cos(theta)` = `|v||n|cos(theta)`
+    since `n` is a unit vector, and so `b` = `unit_normal * dot(v, unit_normal)` by the
+    definition of the dot product. `2*v - 2*b` is thus calculated as follows: */
+    return v - 2 * dot(v, unit_normal) * unit_normal;
 }
 
 /* `Point3D` is a type alias for `Vec3D`, declared to improve clarity in the code */

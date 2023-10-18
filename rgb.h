@@ -80,6 +80,7 @@ public:
 /* Mathematical utility functions */
 auto operator* (const RGB &a, double d) {auto ret = a; ret *= d; return ret;}
 auto operator* (double d, const RGB &a) {return a * d;}
+auto operator* (const RGB &a, const RGB &b) {return RGB::from_mag(a.r * b.r, a.g * b.g, a.b * b.b);}
 
 /* Returns a color linearly interpolated, with a proportion of `1 - d` of `a` and
 a proportion of `d` of `b`. */
