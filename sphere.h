@@ -1,14 +1,17 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
+#include <memory>
 #include "hittable.h"
 #include "vec3d.h"
 #include "ray3d.h"
+#include "material.h"
 
 /* A sphere in 3D space is represented by its center and its radius. */
 struct Sphere : public Hittable {
     Point3D center;
     double radius;
+    std::shared_ptr<Material> material;
 
     /* A ray hits a sphere iff it intersects its surface. Now, a sphere with radius R centered at
     C = (sx, sy, sz) can be expressed as the vector equation (P - C) dot (P - C) = R^2; any point
@@ -65,11 +68,13 @@ struct Sphere : public Hittable {
 
         auto hit_point = ray(root);  /* Evaluate this once */
         auto outward_unit_normal = (hit_point - center) / radius;
-        return hit_info(root, hit_point, outward_unit_normal, ray);
+        return hit_info(root, hit_point, outward_unit_normal, ray, material);
     }
 
-    /* Constructs a Sphere with center `center_` and radius `radius_` */
-    Sphere(const Point3D &center_, double radius_) : center{center_}, radius{radius_} {}
+    /* Constructs a Sphere with center `center_`, radius `radius_`, and material
+    specified by `material_` */
+    Sphere(const Point3D &center_, double radius_, std::shared_ptr<Material> material_)
+        : center{center_}, radius{radius_}, material{material_} {}
 };
 
 #endif

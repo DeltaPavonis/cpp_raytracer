@@ -4,8 +4,13 @@
 #include <iostream>
 #include <limits>
 #include <cmath>
+#include <memory>
 #include "ray3d.h"
 #include "interval.h"
+
+/* Forward-declare the class `Material` to avoid circular dependencies of
+"material.h" and "hittable.h" */
+class Material;
 
 struct hit_info {
 
@@ -23,7 +28,9 @@ struct hit_info {
     Vec3D surface_normal{};
     /* `hit_from_outside` = Whether or not the ray hit the outside of the surface. */
     bool hit_from_outside = false;  /* Named `front_face` in the tutorial */
-
+    /* `material` = the `Material` of the object which the ray intersected */
+    std::shared_ptr<Material> material{};
+    
     /* Converts to `true` if it represents the presence of an intersection, and false if not */
     operator bool() {return !std::isinf(hit_time);}
 
@@ -35,12 +42,13 @@ struct hit_info {
 
     /* Constructs a `hit_info` given `hit_time_` (the hit time), `hit_point_` (the point at
     which the ray intersects the surface), `outward_unit_surface_normal` (an UNIT VECTOR equalling
-    the normal to the surface at the ray's hit point), and finally, the ray `ray` itself.
+    the normal to the surface at the ray's hit point), the ray `ray` itself, and finally, 
+    `material_` (the material of the surface that `ray` hit).
     
     Again, `outward_unit_surface_normal` is assumed to be an unit vector. */
     hit_info(double hit_time_, const Point3D &hit_point_, const Vec3D &outward_unit_surface_normal,
-             const Ray3D &ray)
-        : hit_time{hit_time_}, hit_point{hit_point_}
+             const Ray3D &ray, std::shared_ptr<Material> material_)
+        : hit_time{hit_time_}, hit_point{hit_point_}, material{material_}
     {
         /* Determine, based on the directions of the ray and the outward surface normal at
         the ray's point of intersection, whether the ray was shot from inside the surface
