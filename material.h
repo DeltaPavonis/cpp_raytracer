@@ -4,6 +4,7 @@
 #include "rgb.h"
 #include "ray3d.h"
 #include "hittable.h"
+#include "rand_util.h"
 
 struct scatter_info {
 
@@ -101,6 +102,20 @@ class Dielectric : public Material {
     /* `refr_index` = The refractive index of this dielectric surface */
     double refr_index;
 
+    /* Calculate the reflectance (the specular reflection coefficient) of this
+    dielectric material using Schlick's approximation.
+    `cos_theta` = cos(theta), where theta is the angle between the incident light
+    ray and the surface normal on the side of the initial medium.
+    `refractive_index_ratio` = the ratio of the refractive index of the initial medium
+    to the refractive index of the final medium. */
+    static auto reflectance(double cos_theta, double refractive_index_ratio) {
+        /* Use Schlick's approximation to calculate the reflectance.
+        See https://en.wikipedia.org/wiki/Schlick%27s_approximation. */
+        auto r0 = (1 - refractive_index_ratio) / (1 + refractive_index_ratio);
+        r0 *= r0;
+        return r0 + (1 - r0) * pow(1 - cos_theta, 5);
+    }
+
 public:
 
     scatter_info scatter(const Ray3D &ray, const hit_info &info) const override {
@@ -113,11 +128,20 @@ public:
         auto unit_dir = ray.dir.unit_vector();
 
         /* Calculate direction of resulting ray. Try refraction, then if no refraction is
-        possible under Snell's Law the ray must be reflected. */
-        auto dir = refracted(unit_dir, info.unit_surface_normal, refractive_index_ratio);
+        possible under Snell's Law the ray must be reflected. Also, even if refraction
+        is possible, the material will have a reflectance depending on the current angle;
+        we reflect the light ray with probability equal to the reflectance. */
+        auto dir = refracted(unit_dir, info.unit_surface_normal, refractive_index_ratio); 
         if (std::isinf(dir.x)) {
-            /* Cannot refract, must reflect */
+            /* If `std::isinf(dir.x)`, then this dielectric material cannot refract the light
+            ray, and so it must reflect it. */
             dir = reflected(unit_dir, info.unit_surface_normal);
+        } else {
+            /* Reflect with probability equal to the reflectance of this dielectric object */
+            auto cos_theta = std::fmin(dot(-unit_dir, info.unit_surface_normal), 1.);
+            if (rand_double() < reflectance(cos_theta, refractive_index_ratio)) {
+                dir = reflected(unit_dir, info.unit_surface_normal);
+            }
         }
 
         /* Attenuance is just (1, 1, 1); color is not lost when moving through (or reflecting
