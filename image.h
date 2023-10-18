@@ -18,7 +18,11 @@ class Image {
     size_t w, h;
     std::vector<std::vector<RGB>> pixels;
 
-    Image(size_t w_, size_t h_) : w{w_}, h{h_}, pixels(h, std::vector<RGB>(w)) {}
+    /* If given only a width and a height for the array of pixels, set all pixels to have
+    color (0, 0, 0); that is, black. */
+    Image(size_t w_, size_t h_) : w{w_}, h{h_}, pixels(h, std::vector<RGB>(w, RGB::zero())) {}
+
+    /* Constructs an `Image` from the given rectangular pixel array `pixels_`. */
     Image(const std::vector<std::vector<RGB>> &pixels_) : w{pixels_[0].size()}, h{pixels_.size()},
                                                           pixels{pixels_} {}
 

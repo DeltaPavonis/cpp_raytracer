@@ -7,21 +7,30 @@
 
 Scene world;
 
-auto ray_color(const Ray3D &ray) {
+auto ray_color(const Ray3D &ray, size_t depth_left) {
 
-    auto info = world.hit_by(ray);
-    if (!info) {  /* This goes first so this function's return type can be deduced as `RGB` */
+    /* If the ray has bounced the maximum number of times, then no light is collected
+    from it. Thus, we return the RGB color (r: 0, g: 0, b: 0). */
+    if (depth_left == 0) {
+        return RGB::zero();
+    }
+
+    if (auto info = world.hit_by(ray); info) {
+        /* If this ray hits an object in the scene, compute the scattered ray and the
+        color attenuation, and return attenuation * ray_color(scattered ray).*/
+        if (auto scattered = info.material->scatter(ray, info); scattered) {
+            return scattered.attenuation * ray_color(scattered.ray, depth_left - 1);
+        }
+        /* If the ray is not scattered (because it is absorbed, maybe? TODO: elaborate)
+        then no light is gathered. */
+        return RGB::zero();
+    } else {
         /* If this ray doesn't intersect any object in the scene, then its color is determined
         by the background. Here, the background is a blue-to-white gradient depending on the ray's
         y-coordinate; bluer for lesser y-coordinates and whiter for larger y-coordinates (so bluer
         at the top and whiter at the bottom). */
         return lerp(RGB::from_mag(1, 1, 1), RGB::from_mag(0.5, 0.7, 1),
                     0.5 * ray.dir.unit_vector().y + 0.5);
-    } else {
-        if (auto scattered = info.material->scatter(ray, info); scattered) {
-            return scattered.attenuation * ray_color(scattered.ray);
-        }
-        return RGB::from_mag(0, 0, 0);
     }
 }
 

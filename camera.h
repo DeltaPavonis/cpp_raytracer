@@ -30,6 +30,8 @@ class Camera {
     Point3D upper_left_corner{}, pixel00_loc{};
     /* Number of rays sampled per pixel */
     size_t samples_per_pixel = 1;
+    /* Maximum number of light ray bounces */
+    size_t max_depth = 50;
 
     /* Set the values of `viewport_w`, `viewport_h`, `pixel_delta_x`, `pixel_delta_y`,
     `upper_left_corner`, and `pixel00_loc` based on `image_w` and `image_h`. This function
@@ -105,10 +107,10 @@ public:
 
                 /* Shoot `samples_per_pixel` random rays through the current pixel.
                 The average of the resulting colors will be the color for this pixel. */
-                RGB pixel_color{};
+                auto pixel_color = RGB::zero();
                 for (size_t sample = 0; sample < samples_per_pixel; ++sample) {
                     auto ray = random_ray_through_pixel(row, col);
-                    pixel_color += ray_color(ray);
+                    pixel_color += ray_color(ray, max_depth);
                 }
                 pixel_color /= static_cast<double>(samples_per_pixel);
 
@@ -127,10 +129,10 @@ public:
 
                 /* Shoot `samples_per_pixel` random rays through the current pixel.
                 The average of the resulting colors will be the color for this pixel. */
-                RGB pixel_color{};
+                auto pixel_color = RGB::zero();
                 for (size_t sample = 0; sample < samples_per_pixel; ++sample) {
                     auto ray = random_ray_through_pixel(row, col);
-                    pixel_color += ray_color(ray);
+                    pixel_color += ray_color(ray, max_depth);
                 }
                 pixel_color /= static_cast<double>(samples_per_pixel);
 
@@ -178,6 +180,9 @@ public:
     }
     /* Sets the number of rays sampled for each pixel to `rays_per_pixel_`. */
     auto& set_samples_per_pixel(size_t samples) {samples_per_pixel = samples; return *this;}
+    /* Sets the maximum recursive depth for the camera (the maximum number of bounces for
+    a given light ray) to `max_depth_`. */
+    auto& set_max_depth(size_t max_depth_) {max_depth = max_depth_; return *this;}
 };
 
 #endif

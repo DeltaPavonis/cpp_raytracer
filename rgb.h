@@ -23,28 +23,31 @@ public:
     
     /* --- NAMED CONSTRUCTORS --- */
 
-    /* Creates an image, given red, green, and blue components (each in the range 0.0 to 1.0) */
+    /* Creates a RGB color, given red, green, and blue components (each in the range 0.0 to 1.0) */
     static RGB from_mag(double red, double green, double blue) {
         return RGB(red, green, blue);
     }
 
-    /* Creates an image with red, green, and blue components all set to `val` (where
+    /* Creates a RGB color with red, green, and blue components all set to `val` (where
     0.0 <= `val` <= 1.0) */
     static RGB from_mag(double val) {
         return from_mag(val, val, val);
     }
 
-    /* Creates an image where the red, green, and blue components range from `0` to
-    `max_magnitude` */
+    /* Creates a RGB color with red, green, and blue components, where each ranges from
+    `0` to `max_magnitude` */
     static RGB from_rgb(double red, double green, double blue, double max_magnitude = 255) {
         return RGB(red / max_magnitude, green / max_magnitude, blue / max_magnitude);
     }
 
-    /* Creates an image where the red, green, and blue components range from `0` to
+    /* Creates a RGB color where the red, green, and blue components range from `0` to
     `max_magnitude`, with all three components equal to `val` */
     static RGB from_rgb(double val, double max_magnitude = 255) {
         return from_rgb(val, val, val, max_magnitude);
     }
+
+    /* Creates a RGB color with red, green, and blue components set to 0 */
+    static RGB zero() {return from_mag(0);}
 
     /* Mathematical operators (since anti-aliasing requires finding the average of
     multiple colors, so we need += and /=) */
@@ -72,9 +75,6 @@ public:
               + std::to_string(static_cast<int>(scale * linear_to_gamma(b, gamma)))
               + (surrounding.empty() ? "" : std::string{surrounding[1]});
     }
-
-    /* Default constructor sets `r` = `g` = `b` = 0. */
-    RGB() : r{0}, g{0}, b{0} {}
 };
 
 /* Mathematical utility functions */
