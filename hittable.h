@@ -20,12 +20,12 @@ struct hit_info {
     /* `hit_point` = The point at which the ray intersects the object. If `ray`
     is the ray, then `hit_point` is equivalent to `ray(hit_time)`. */
     Point3D hit_point{};
-    /* `surface_normal` = The unit vector normal to the surface at the point of intersection.
-    `surface_normal` points outward if the ray hit the outside of the surface, and it points
-    inward if the ray hit the inside of the surface. Thus, `surface_normal` represents the
-    true surface normal at the hit point, taking into account whether the front or back face
+    /* `unit_surface_normal` = The unit vector normal to the surface at the point of intersection.
+    `unit_surface_normal` points outward if the ray hit the outside of the surface, and it points
+    inward if the ray hit the inside of the surface. Thus, `unit_surface_normal` represents the
+    true unit surface normal at the hit point, taking into account whether the front or back face
     of the surface was hit. */
-    Vec3D surface_normal{};
+    Vec3D unit_surface_normal{};
     /* `hit_from_outside` = Whether or not the ray hit the outside of the surface. */
     bool hit_from_outside = false;  /* Named `front_face` in the tutorial */
     /* `material` = the `Material` of the object which the ray intersected */
@@ -56,12 +56,12 @@ struct hit_info {
         if (dot(ray.dir, outward_unit_surface_normal) > 0) {
             /* Then the angle between the ray and the outward surface normal is in [0, 90) degrees,
             which means the ray originated INSIDE the object. */
-            surface_normal = -outward_unit_surface_normal;  /* So flip outward surface normal */
+            unit_surface_normal = -outward_unit_surface_normal;  /* So flip outward surface normal */
             hit_from_outside = false;
         } else {
             /* Then the angle between the ray and the outward surface normal is in [90, 180)
             degrees, which means the ray originated OUTSIDE the object. */
-            surface_normal = outward_unit_surface_normal;
+            unit_surface_normal = outward_unit_surface_normal;
             hit_from_outside = true;
         }
     }
@@ -70,7 +70,7 @@ struct hit_info {
 /* Overload `operator<<` for `hit_info` to allow printing it to output streams */
 std::ostream& operator<< (std::ostream &os, const hit_info &info) {
     os << "hit_info {\n\thit_time: " << info.hit_time << "\n\thit_point: " << info.hit_point
-       << "\n\tsurface_normal: " << info.surface_normal << "\n\thit_from_outside: "
+       << "\n\tsurface_normal: " << info.unit_surface_normal << "\n\thit_from_outside: "
        << info.hit_from_outside << "\n}\n";
     return os;
 }

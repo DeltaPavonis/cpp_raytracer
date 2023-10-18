@@ -42,7 +42,7 @@ public:
         that the endpoint of the scattered ray is an uniformly random point on the unit sphere
         centered at the endpoint of the unit surface normal at the original ray's intersection
         point with the surface. */
-        auto scattered_direction = info.surface_normal + Vec3D::random_unit_vector();
+        auto scattered_direction = info.unit_surface_normal + Vec3D::random_unit_vector();
 
         /* If the random unit vector happens to equal `-info.surface_normal`, then
         `scattered_direction` will be the zero vector, which will lead to numerical errors.
@@ -50,7 +50,7 @@ public:
         case if all its components have magnitude less than `1e-8`), we just set it to
         the direction of the surface normal at the intersection point. */
         if (scattered_direction.near_zero()) {
-            scattered_direction = info.surface_normal;
+            scattered_direction = info.unit_surface_normal;
         }
 
         /* The scattered ray goes from the original ray's hit point to the randomly-chosen point
@@ -74,7 +74,7 @@ public:
 
         /* Unlike Lambertian reflectors, metals display specular reflection; the incident
         light ray is reflected about the surface normal. */
-        auto reflected_unit_dir = reflected(ray.dir.unit_vector(), info.surface_normal);
+        auto reflected_unit_dir = reflected(ray.dir.unit_vector(), info.unit_surface_normal);
         /* To simulate fuzzy reflection off metal surfaces, the end point is chosen randomly
         off the sphere with radius `fuzz_factor` centered at the endpoint of `reflected_unit_dir`.
         Thus, `fuzz_factor` = 0 results in perfect specular (perfectly mirror-like) reflection.
@@ -89,7 +89,9 @@ public:
         return scatter_info(Ray3D(info.hit_point, scattered_dir), intrinsic_color);
     }
 
-    /* Constructs a metal (specular) reflector with intrinsic color `intrinsic_color_`. */
+    /* Constructs a metal (specular) reflector with intrinsic color `intrinsic_color_`
+    and "fuzz factor" `fuzz`. A fuzz factor of 0 indicates perfect specular reflection,
+    and the maximum fuzz factor is 1.  */
     Metal(const RGB &intrinsic_color_, double fuzz = 0) : intrinsic_color{intrinsic_color_},
                                                           fuzz_factor{std::min(fuzz, 1.)} {}
 };
