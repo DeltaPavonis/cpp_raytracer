@@ -114,8 +114,24 @@ auto refracted(const Vec3D &unit_vec, const Vec3D &unit_normal, double refractiv
     `refractive_index_ratio` = x / y. */
 
     /* Use `std::fmin` to bound `cos_theta` from above by 1., just in case a floating-point
-    inaccuracy occurs which makes it a little greater than 1. */
+    inaccuracy occurs which makes it a little greater than 1.. This prevents the computation
+    of `sin_theta` from taking the square root of a negative number. */
     auto cos_theta = std::fmin(dot(-unit_vec, unit_normal), 1.);
+    auto sin_theta = std::sqrt(1 - cos_theta * cos_theta);
+
+    /* By Snell's law, n1sin(theta_1) = n2sin(theta_2), where n1 and n2 are the refractive
+    indices of the initial and final mediums, theta_1 is the angle between the incident ray
+    and the surface normal on the side of the initial medium, and theta_2 is the angle between
+    the resulting ray and the surface normal on the side of the final medium. Clearly, a
+    solution to theta_2 exists if and only if (n1/n2) * sin(theta_1) <= 1 (we already know this
+    is >= 0 because n1/n2 >= 0 and 0 <= theta_1 <= 90 degrees). Thus, if
+    `refractive_index_ratio sin_theta` > 1, there is no solution and thus no refracted ray. */
+    if (refractive_index_ratio * sin_theta > 1) {
+        /* This ray cannot be refracted. It must be reflected. */
+        return Vec3D{std::numeric_limits<double>::infinity(),
+                     std::numeric_limits<double>::infinity(),
+                     std::numeric_limits<double>::infinity()};
+    }
 
     /* Individually compute the components of the resulting vector that are perpendicular
     and parallel to the surface normal on the side of the final medium, and then sum them

@@ -112,14 +112,20 @@ public:
         auto refractive_index_ratio = (info.hit_from_outside ? 1. / refr_index : refr_index / 1.);
         auto unit_dir = ray.dir.unit_vector();
 
-        auto refracted_dir = refracted(unit_dir, info.unit_surface_normal, refractive_index_ratio);
+        /* Calculate direction of resulting ray. Try refraction, then if no refraction is
+        possible under Snell's Law the ray must be reflected. */
+        auto dir = refracted(unit_dir, info.unit_surface_normal, refractive_index_ratio);
+        if (std::isinf(dir.x)) {
+            /* Cannot refract, must reflect */
+            dir = reflected(unit_dir, info.unit_surface_normal);
+        }
 
         /* Attenuance is just (1, 1, 1); color is not lost when moving through (or reflecting
         off of) a Dielectric material apparently. The tutorial says "Attenuation is always 1"
         because a glass surface absorbs nothing. Makes sense, but does this hold for ALL
         dielectric surfaces? Maybe for tinted glass it doesn't, but our current implementation
         of Dielectric doesn't have a field for intrinsic color or tint. */
-        return scatter_info(Ray3D(info.hit_point, refracted_dir), RGB::from_mag(1, 1, 1));
+        return scatter_info(Ray3D(info.hit_point, dir), RGB::from_mag(1, 1, 1));
     }
 
     /* Constructs a dielectric reflector with refractive index `refractive_index`. */
