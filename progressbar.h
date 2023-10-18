@@ -92,8 +92,9 @@ struct ProgressBar {
     {
         assert(end > beg);
         if constexpr (!DISABLE_PRINTING) {
-            std::cout << desc << ": |" << std::string(100 / downscale_factor, ' ') << "|\n";
-            std::cout << std::string(std::string(desc + ": |").size(), ' ') << std::flush;
+            std::cout << desc << '\n';
+            std::cout << '|' << std::string(100 / downscale_factor, ' ') << "|\n";
+            std::cout << ' ' << std::flush;
         }
     }
 
