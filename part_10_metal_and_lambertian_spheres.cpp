@@ -18,8 +18,8 @@ auto ray_color(const Ray3D &ray, size_t depth_left) {
     if (auto info = world.hit_by(ray); info) {
         /* If this ray hits an object in the scene, compute the scattered ray and the
         color attenuation, and return attenuation * ray_color(scattered ray).*/
-        if (auto scattered = info.material->scatter(ray, info); scattered) {
-            return scattered.attenuation * ray_color(scattered.ray, depth_left - 1);
+        if (auto scattered = info->material->scatter(ray, *info); scattered) {
+            return scattered->attenuation * ray_color(scattered->ray, depth_left - 1);
         }
         /* If the ray is not scattered (because it is absorbed, maybe? TODO: elaborate)
         then no light is gathered. */
@@ -42,8 +42,8 @@ int main()
     auto material_for_ground = std::make_shared<Lambertian>(RGB::from_mag(0.8, 0.8, 0));
     auto material_for_center = std::make_shared<Lambertian>(RGB::from_mag(0.7, 0.3, 0.3));
     /* Test fuzziness factors of 0.25 and 0.75 on the left and right spheres, respectively */
-    auto material_for_left   = std::make_shared<Metal>(RGB::from_mag(0.8, 0.8, 0.8), 0.25);
-    auto material_for_right  = std::make_shared<Metal>(RGB::from_mag(0.8, 0.6, 0.2), 0.75);
+    auto material_for_left   = std::make_shared<Metal>(RGB::from_mag(0.8, 0.8, 0.8), 0.3);
+    auto material_for_right  = std::make_shared<Metal>(RGB::from_mag(0.8, 0.6, 0.2), 1);
 
     world.add(make_shared<Sphere>(Point3D( 0.0, -100.5, -1.0), 100.0, material_for_ground));
     world.add(make_shared<Sphere>(Point3D( 0.0,    0.0, -1.0),   0.5, material_for_center));

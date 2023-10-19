@@ -25,7 +25,7 @@ struct scatter_info {
 };
 
 struct Material {
-    virtual scatter_info scatter(const Ray3D &ray, const hit_info &info) const = 0;
+    virtual std::optional<scatter_info> scatter(const Ray3D &ray, const hit_info &info) const = 0;
 
     virtual ~Material() = default;
 };
@@ -36,7 +36,7 @@ class Lambertian : public Material {
 
 public:
 
-    scatter_info scatter(const Ray3D &ray, const hit_info &info) const override {
+    std::optional<scatter_info> scatter(const Ray3D &ray, const hit_info &info) const override {
 
         /* Lambertian reflectance states that an incident ray will be reflected (scattered) at an
         angle of phi off the surface normal with probabiliyt cos(phi). This is equivalent to saying
@@ -71,7 +71,7 @@ class Metal : public Material {
 
 public:
 
-    scatter_info scatter(const Ray3D &ray, const hit_info &info) const override {
+    std::optional<scatter_info> scatter(const Ray3D &ray, const hit_info &info) const override {
 
         /* Unlike Lambertian reflectors, metals display specular reflection; the incident
         light ray is reflected about the surface normal. */
@@ -118,7 +118,7 @@ class Dielectric : public Material {
 
 public:
 
-    scatter_info scatter(const Ray3D &ray, const hit_info &info) const override {
+    std::optional<scatter_info> scatter(const Ray3D &ray, const hit_info &info) const override {
 
         /* If the ray hits this dielectric from the outside, then it is transitioning from
         air (refractive index assumed to be 1) to the current object, so the ratio is 1 / ri.

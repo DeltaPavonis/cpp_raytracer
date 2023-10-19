@@ -5,6 +5,7 @@
 #include <limits>
 #include <cmath>
 #include <memory>
+#include <optional>
 #include "ray3d.h"
 #include "interval.h"
 
@@ -30,9 +31,6 @@ struct hit_info {
     bool hit_from_outside = false;  /* Named `front_face` in the tutorial */
     /* `material` = the `Material` of the object which the ray intersected */
     std::shared_ptr<Material> material{};
-    
-    /* Converts to `true` if it represents the presence of an intersection, and false if not */
-    operator bool() {return !std::isinf(hit_time);}
 
     /* --- CONSTRUCTORS ---*/
 
@@ -80,7 +78,7 @@ struct Hittable {
     /* Check if the object is hit by a ray in the time range (t_min, t_max).
     = 0 causes `hit_by` to be a pure virtual function, and so `Hittable` is an abstract
     class, which means it itself cannot be instantiated (good, it's only an interface). */
-    virtual hit_info hit_by(const Ray3D &ray, const Interval &ray_times) const = 0;
+    virtual std::optional<hit_info> hit_by(const Ray3D &ray, const Interval &ray_times) const = 0;
 
     virtual ~Hittable() = default;
 };

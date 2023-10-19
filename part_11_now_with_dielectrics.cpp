@@ -19,9 +19,10 @@ auto ray_color(const Ray3D &ray, size_t depth_left) {
 
         /* If this ray hits an object in the scene, compute the scattered ray and the
         color attenuation, and return attenuation * ray_color(scattered ray).*/
-        if (auto scattered = info.material->scatter(ray, info); scattered) {
-            return scattered.attenuation * ray_color(scattered.ray, depth_left - 1);
+        if (auto scattered = info->material->scatter(ray, *info); scattered) {
+            return scattered->attenuation * ray_color(scattered->ray, depth_left - 1);
         }
+        
         /* If the ray is not scattered (because it is absorbed, maybe? TODO: elaborate)
         then no light is gathered. */
         return RGB::zero();
@@ -48,14 +49,14 @@ int main()
     world.add(make_shared<Sphere>(Point3D( 0.0, -100.5, -1.0), 100.0, material_for_ground));
     world.add(make_shared<Sphere>(Point3D( 0.0,    0.0, -1.0),   0.5, material_for_center));
     world.add(make_shared<Sphere>(Point3D(-1.0,    0.0, -1.0),   0.5, material_for_left));
-    world.add(make_shared<Sphere>(Point3D(-1.0,    0.0, -1.0),  -0.4, material_for_left));
+    // world.add(make_shared<Sphere>(Point3D(-1.0,    0.0, -1.0),  -0.4, material_for_left));
     world.add(make_shared<Sphere>(Point3D( 1.0,    0.0, -1.0),   0.5, material_for_right));
 
     Camera().set_image_by_width_and_aspect_ratio(image_width, aspect_ratio)
             .set_viewport_height(2)
             .set_samples_per_pixel(50)  /* Anti-aliasing */
             .set_max_depth(20)  /* Now with maximum number of light ray bounces */
-            .render_to(ray_color, "part_11_now_with_dielectrics_hollow_sphere_test.ppm");
+            .render_to(ray_color, "my_image.ppm");
 
     return 0;
 }
