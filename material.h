@@ -84,6 +84,12 @@ public:
         of reflection has the same probability, just like in Lambertian reflectors). */
         auto scattered_dir = reflected_unit_dir + fuzz_factor * Vec3D::random_unit_vector();
 
+        /* If the scattered direction points into the surface, just have the surface absorb
+        the light ray entirely (so return an empty std::optional) */
+        if (dot(info.unit_surface_normal, scattered_dir) < 0) {
+            return {};
+        }
+
         /* The scattered ray goes from the original ray's hit point to the randomly-chosen point
         on the unit sphere centered at the unit surface normal's endpoint, and the attenuation
         is the same as the intrinsic color. */
