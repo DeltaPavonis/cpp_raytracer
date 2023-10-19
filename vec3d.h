@@ -49,6 +49,16 @@ struct Vec3D {
         return result.unit_vector();
     }
 
+    /* Generates an uniformly random vector in the unit disk; that is, generates a
+    vector (a, b, 0) where a^2 + b^2 = 1. */
+    static auto random_vector_in_unit_disk() {
+        Vec3D result;
+        do {
+            result = Vec3D{rand_double(-1, 1), rand_double(-1, 1), 0};
+        } while (!(result.mag_squared() < 1));
+        return result;
+    }
+
     /* Generate a random unit vector that is in the same hemisphere as `surface_normal`, 
     which is an OUTWARD surface normal at the same point on some surface as the random unit
     vector to be generated. Thus, this function returns an unit vector pointing out of

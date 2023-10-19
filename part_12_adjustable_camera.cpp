@@ -53,10 +53,12 @@ int main()
     world.add(make_shared<Sphere>(Point3D( 1.0,    0.0, -1.0),   0.5, material_for_right));
 
     Camera().set_image_by_width_and_aspect_ratio(image_width, aspect_ratio)
-            .set_vertical_fov(20)  /* Now set FOV instead of setting viewport dimensions directly */
+            .set_vertical_fov(20)  /* Now set FOV instead of setting viewport dimensions directly */\
             .set_camera_center(Point3D{-2, 2, 1})
             .set_camera_lookat(Point3D{0, 0, -1})
             .set_camera_up_direction(Point3D{0, 1, 0})
+            .set_focus_distance(3.4)
+            .set_defocus_angle(10)
             .set_samples_per_pixel(100)  /* Anti-aliasing */
             .set_max_depth(20)  /* Now with maximum number of light ray bounces */
             .render_to(ray_color, "part_12_adjustable_camera.ppm");
