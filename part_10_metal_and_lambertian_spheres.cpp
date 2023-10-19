@@ -51,7 +51,8 @@ int main()
     world.add(make_shared<Sphere>(Point3D( 1.0,    0.0, -1.0),   0.5, material_for_right));
 
     Camera().set_image_by_width_and_aspect_ratio(image_width, aspect_ratio)
-            .set_viewport_height(2)
+            // .set_viewport_height(2)
+            .set_vertical_fov(90)  /* Now set FOV instead of setting viewport dimensions directly */
             .set_samples_per_pixel(50)  /* Now with anti-aliasing */
             .render_to(ray_color, "part_10_metal_and_lambertian_spheres_with_fuzzy_reflection.ppm");
 

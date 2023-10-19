@@ -1,6 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include <numbers>
 #include "rand_util.h"
 #include "image.h"
 #include "ray3d.h"
@@ -13,12 +14,9 @@ class Camera {
 
     /* Width and height (in pixels) of the final rendered image. 1280 x 720 by default */
     size_t image_w = 1280, image_h = 720;
-    /* Viewport width and height. Note that these are real-valued. By default, the
-    viewport has width 1.0, and its height will be determined at render-time based
-    on the aspect ratio of the image (the viewport must have the same aspect ratio
-    as the final rendered image). The -1 denotes "will be determined by the other
-    dimension". */
-    double viewport_w = 1, viewport_h = -1;
+    /* Width and height of the viewport (aka image plane). Note that these are real-valued.
+    Both are determined by either `vertical_fov` or `horizontal_fov` during `init()`. */
+    double viewport_w{}, viewport_h{};
     /* The horizontal and vertical delta vectors from pixel to pixel. */
     Vec3D pixel_delta_x{}, pixel_delta_y{};
     /* Coordinates of the camera/eye point and its distance away from the viewport,
@@ -28,10 +26,14 @@ class Camera {
     /* Coordinates of the upper left corner of the viewport, and the coordinates of the
     topmost and leftmost image pixel */
     Point3D upper_left_corner{}, pixel00_loc{};
-    /* Number of rays sampled per pixel */
-    size_t samples_per_pixel = 1;
-    /* Maximum number of light ray bounces */
-    size_t max_depth = 50;
+    /* Number of rays sampled per pixel, 50 by default */
+    size_t samples_per_pixel = 50;
+    /* Maximum number of light ray bounces into the scene, 10 by default */
+    size_t max_depth = 10;
+    /* Vertical and horizontal FOV (Field of View) of the camera, stored in radians.
+    By default, the vertical FOV is 90 degrees, and the horizontal FOV is determined
+    by the vertical FOV and the aspect ratio of the image  */
+    double vertical_fov = 90, horizontal_fov = std::numeric_limits<double>::infinity();
 
     /* Set the values of `viewport_w`, `viewport_h`, `pixel_delta_x`, `pixel_delta_y`,
     `upper_left_corner`, and `pixel00_loc` based on `image_w` and `image_h`. This function
@@ -42,12 +44,16 @@ class Camera {
         from the aspect ratio passed in calls to `set_image_by_xxxxx_and_aspect_ratio`,
         because `image_w` and `image_h` both must be integers. */
         auto aspect_ratio = static_cast<double>(image_w) / static_cast<double>(image_h);
-        /* Set viewport_h based on viewport_w, or vice versa, making sure that the
-        aspect ratio of the viewport equals the aspect ratio of the final outputted image.
-        Note that viewport widths and heights less than one are ok (unlike for `image_w`
-        and `image_h`), because they are real-valued. */
-        if (viewport_w < 0) {viewport_w = viewport_h * aspect_ratio;}
-        else {viewport_h = viewport_w / aspect_ratio;}
+
+        /* Set viewport_w and viewport_h based on `vertical_fov` or `horizontal_fov`,
+        and `aspect_ratio`. */
+        if (!std::isinf(vertical_fov)) {
+            viewport_h = 2 * focal_length * std::tan(vertical_fov / 2);
+            viewport_w = viewport_h * aspect_ratio;
+        } else {
+            viewport_w = 2 * focal_length * std::tan(vertical_fov / 2);
+            viewport_h = viewport_w / aspect_ratio;
+        }
 
         /* `x_vec` and `y_vec` are the vectors right and down across the viewport, respectively
         We use right-handed coordinates, which means the y-axis goes up, the x-axis goes right,
@@ -148,12 +154,6 @@ public:
     auto& set_camera_center(const Point3D &p) {camera_center = p; return *this;}
     /* Sets the focal length (the distance from the camera center to the viewport) to `focal_len`. */
     auto& set_focal_length(double focal_len) {focal_length = focal_len; return *this;}
-    /* Sets the width of the viewport to `width`. The height of the viewport will
-    be inferred later so that the viewport's aspect ratio matches the image's aspect ratio. */
-    auto& set_viewport_width(double width) {viewport_w = width; viewport_h = -1; return *this;}
-    /* Sets the height of the viewport to `height`. The width of the viewport will
-    be inferred later so that the viewport's aspect ratio matches the image's aspect ratio. */
-    auto& set_viewport_height(double height) {viewport_h = height; viewport_w = -1; return *this;}
     /* Sets the width of the final outputted image to `width`. */
     auto& set_image_width(size_t width) {image_w = width; return *this;}
     /* Sets the height of the final outputted image to `height`. */
@@ -165,14 +165,14 @@ public:
         return *this;
     }
     /* Sets the image width to `width`, and infers the image height from `width` and
-    `aspect_ratio`.*/
+    `aspect_ratio` in `init()`.*/
     auto& set_image_by_width_and_aspect_ratio(size_t width, double aspect_ratio) {
         auto height = static_cast<size_t>(std::round(static_cast<double>(width) / aspect_ratio));
         /* Make sure height is at least 1 */
         return set_image_dimensions(width, std::max(size_t{1}, height));
     }
     /* Sets the image height to `height`, and infers the image width from `height` and
-    `aspect_ratio`. */
+    `aspect_ratio` in `init()`. */
     auto& set_image_by_height_and_aspect_ratio(size_t height, double aspect_ratio) {
         auto width = static_cast<size_t>(std::round(static_cast<double>(height) * aspect_ratio));
         /* Make sure width is at least 1 */
@@ -183,6 +183,20 @@ public:
     /* Sets the maximum recursive depth for the camera (the maximum number of bounces for
     a given light ray) to `max_depth_`. */
     auto& set_max_depth(size_t max_depth_) {max_depth = max_depth_; return *this;}
+    /* Sets the vertical FOV (field of view) of the camera to `vertical_fov_degrees` degrees.
+    The horizontal FOV will then be inferred from `vertical_fov` and `aspect_ratio` in `init()`. */
+    auto& set_vertical_fov(double vertical_fov_degrees) {
+        vertical_fov = vertical_fov_degrees * std::numbers::pi / 180;
+        horizontal_fov = std::numeric_limits<double>::infinity();
+        return *this;
+    }
+    /* Sets the horizontal FOV (field of view) of the camera to `horizontal_fov_degrees` degrees.
+    The vertical FOV will then be inferred from `horizontal_fov` and `aspect_ratio` in `init()`. */
+    auto& set_horizontal_fov(double horizontal_fov_degrees) {
+        horizontal_fov = horizontal_fov_degrees * std::numbers::pi / 180;
+        vertical_fov = std::numeric_limits<double>::infinity();
+        return *this;
+    }
 };
 
 #endif
