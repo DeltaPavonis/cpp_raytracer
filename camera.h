@@ -226,8 +226,8 @@ public:
     auto& set_focus_distance(double focus_distance) {focus_dist = focus_distance; return *this;}
     /* Set the defocus angle of the camera (the angle of the cone with apex at the center of the
     viewpoint and with base as the defocus disk, which is centered at the camera center) to
-    `defocus_angle_`. Setting the defocus angle to 0 eliminates all blur, making everything
-    in perfect focus. */
+    `defocus_angle_degrees` DEGREES. note that setting the defocus angle to 0 eliminates all blur,
+    making everything render in perfect focus. */
     auto& set_defocus_angle(double defocus_angle_degrees) {
         defocus_angle = defocus_angle_degrees * std::numbers::pi / 180;  /* convert to radians */
         return *this;

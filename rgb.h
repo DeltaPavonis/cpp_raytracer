@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <string>
+#include "rand_util.h"
 
 /* Returns the gamma-encoded value of the magnitude `d`, under a gamma of `gamma`. */
 auto linear_to_gamma(double d, double gamma = 2) {
@@ -48,6 +49,12 @@ public:
 
     /* Creates a RGB color with red, green, and blue components set to 0 */
     static RGB zero() {return from_mag(0);}
+
+    /* Creates a RGB with random red, green, and blue components, each a real number
+    in the range [`min`, `max`] */
+    static RGB random(double min = 0, double max = 1) {
+        return from_mag(rand_double(min, max), rand_double(min, max), rand_double(min, max));
+    }
 
     /* Mathematical operators (since anti-aliasing requires finding the average of
     multiple colors, so we need += and /=) */
