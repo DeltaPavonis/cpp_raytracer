@@ -2,7 +2,6 @@
 #define CAMERA_H
 
 #include <numbers>
-#include "rand_util.h"
 #include "image.h"
 #include "ray3d.h"
 
@@ -189,7 +188,7 @@ public:
              }
         }
     }
-
+    
     Image render(const auto &ray_color) {
         init();
 

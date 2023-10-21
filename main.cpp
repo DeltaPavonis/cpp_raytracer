@@ -46,6 +46,7 @@ int main()
     auto ground_material = std::make_shared<Lambertian>(RGB::from_mag(0.5, 0.5, 0.5));
     world.add(std::make_shared<Sphere>(Point3D(0,-1000,0), 1000, ground_material));
 
+    /* Generate small spheres */
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             auto choose_mat = rand_double();
@@ -85,6 +86,7 @@ int main()
     auto material3 = std::make_shared<Metal>(RGB::from_mag(0.7, 0.6, 0.5), 0.0);
     world.add(std::make_shared<Sphere>(Point3D(4, 1, 0), 1.0, material3));
 
+    /* Render image */
     Camera().set_image_by_width_and_aspect_ratio(1080, 16. / 9.)  /* Should be height 1080, oops */
             .set_vertical_fov(20)  /* Smaller vertical FOV zooms in, also avoids shape stretching */
             .set_camera_center(Point3D{13, 2, 3})

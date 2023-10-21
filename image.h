@@ -82,7 +82,10 @@ public:
         return Image(img);
     }
 
+    /* Creates an image correspnoding to the PPM file with name `file_name`. */
     static auto from_ppm_file(const std::string &file_name) {
+
+        /* Try to open the file `file_name` */
         std::ifstream fin(file_name);
         if (!fin.is_open()) {
             std::cout << "Error: In Image::from_ppm_file(), could not open the file \""
@@ -90,7 +93,51 @@ public:
             std::exit(-1);
         }
 
-        return Image(0, 0); /* TODO */
+        /* Require that first line is "P3" */
+        std::string first_line;
+        std::getline(fin, first_line);
+        if (first_line != "P3") {
+            std::cout << "Error: In Image::from_ppm_file(\"" << file_name << "\"), first line "
+                         "of file was not \"P3\", but instead was " << first_line << std::endl;
+            std::exit(-1);
+        }
+
+        /* Input image width and image height (should be line 2) */
+        size_t image_width, image_height;
+        if (!(fin >> image_width >> image_height)) {
+            std::cout << "Error: In Image::from_ppm_file(\"" << file_name << "\"), could not "
+                         "parse image width and height (two integers) on second line" << std::endl;
+            std::exit(-1);
+        }
+
+        /* Input maximum RGB magnitude (second be line 3) */
+        int max_magnitude;
+        if (!(fin >> max_magnitude)) {
+            std::cout << "Error: In Image::from_ppm_file(\"" << file_name << "\"), could not "
+                         "parse RGB max magnitude (one integer), which should occur on the third "
+                         "line, right after the image width and height on the second line"
+                      << std::endl;
+            std::exit(-1);
+        }
+
+        /* Input RGB data for all pixels*/
+        std::vector ppm_data(image_height, std::vector<RGB>(image_width, RGB::zero()));  /* CTAD */
+        for (size_t row = 0; row < image_height; ++row) {
+            for (size_t col = 0; col < image_width; ++col) {
+
+                /* Read (r, g, b). If it fails, raise an error */
+                int r, g, b;
+                if (!(fin >> r >> g >> b)) {
+                    std::cout << "Error: In Image::from_ppm_file(\"" << file_name << "\"), failed "
+                                "to parse color #" << (row * image_width) + col + 1 << "color "
+                                "(three integers (r, g, b))" << std::endl;
+                    std::exit(-1);
+                }
+                ppm_data[row][col] = RGB::from_rgb(r, g, b, max_magnitude);
+            }
+        }
+
+        return from_data(ppm_data);
     }
 };
 
