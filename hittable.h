@@ -15,28 +15,23 @@ class Material;
 
 struct hit_info {
 
-    /* `hit_time` = The time where the ray intersects an object. If the ray does
-    not intersect any object, then `hit_time` = `std::numeric_limits<double>::infinity()`. */
-    double hit_time = std::numeric_limits<double>::infinity();
+    /* `hit_time` = The time where the ray intersects an object */
+    double hit_time;
     /* `hit_point` = The point at which the ray intersects the object. If `ray`
     is the ray, then `hit_point` is equivalent to `ray(hit_time)`. */
-    Point3D hit_point{};
+    Point3D hit_point;
     /* `unit_surface_normal` = The unit vector normal to the surface at the point of intersection.
     `unit_surface_normal` points outward if the ray hit the outside of the surface, and it points
     inward if the ray hit the inside of the surface. Thus, `unit_surface_normal` represents the
     true unit surface normal at the hit point, taking into account whether the front or back face
     of the surface was hit. */
-    Vec3D unit_surface_normal{};
+    Vec3D unit_surface_normal;
     /* `hit_from_outside` = Whether or not the ray hit the outside of the surface. */
     bool hit_from_outside = false;  /* Named `front_face` in the tutorial */
     /* `material` = the `Material` of the object which the ray intersected */
-    std::shared_ptr<Material> material{};
+    std::shared_ptr<Material> material;
 
     /* --- CONSTRUCTORS ---*/
-
-    /* Default constructor denotes "no intersection"; `hit_time` is set to
-    `std::numeric_limits<double>::infinity()`. */
-    hit_info() {}
 
     /* Constructs a `hit_info` given `hit_time_` (the hit time), `hit_point_` (the point at
     which the ray intersects the surface), `outward_unit_surface_normal` (an UNIT VECTOR equalling
@@ -46,7 +41,6 @@ struct hit_info {
     Again, `outward_unit_surface_normal` is assumed to be an unit vector. */
     hit_info(double hit_time_, const Point3D &hit_point_, const Vec3D &outward_unit_surface_normal,
              const Ray3D &ray, std::shared_ptr<Material> material_)
-        : hit_time{hit_time_}, hit_point{hit_point_}, material{material_}
     {
         /* Determine, based on the directions of the ray and the outward surface normal at
         the ray's point of intersection, whether the ray was shot from inside the surface

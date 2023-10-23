@@ -2,16 +2,17 @@
 #define RAY3D_H
 
 #include <iostream>
-#include <cmath>
 #include "vec3d.h"
 
 /* `Ray3D` represents a ray in 3D space; that is, an origin (a 3D point) and
 a direction (a 3D vector). */
 struct Ray3D {
-    Point3D origin = {0, 0, 0};
-    Vec3D dir = {0, 0, 0};
+    /* `origin` = a 3D point representing the origin of the ray. (0, 0, 0) by default. */
+    Point3D origin{0, 0, 0};
+    /* `dir` = a 3D vector representing the direction of the ray. (0, 0, 0) by default. */
+    Vec3D dir{0, 0, 0};
 
-    /* Evaluate the ray at time `t` */
+    /* Returns the point located at time `t` on this ray */
     auto operator() (double t) const {return origin + t * dir;}
 };
 

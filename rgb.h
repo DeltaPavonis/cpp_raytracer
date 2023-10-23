@@ -5,7 +5,7 @@
 #include <string>
 #include "rand_util.h"
 
-/* Returns the gamma-encoded value of the magnitude `d`, under a gamma of `gamma`. */
+/* Returns the gamma-encoded value of the magnitude `d`, under a gamma of `gamma` (2 by default). */
 auto linear_to_gamma(double d, double gamma = 2) {
     /* See https://stackoverflow.com/a/16521337/12597781. */
     return std::pow(d, 1 / gamma);

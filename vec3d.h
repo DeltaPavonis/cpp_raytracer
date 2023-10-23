@@ -25,21 +25,21 @@ struct Vec3D {
     /* Compute unit vector (forward declared) */
     Vec3D unit_vector() const;
 
-    /* Check if all three components less than `epsilon` */
+    /* Returns `true` if all three components have magnitude strictly less than `epsilon` */
     auto near_zero(double epsilon = 1e-8) {
         return (fabs(x) < epsilon) && (fabs(y) < epsilon) && (fabs(z) < epsilon);
     }
 
-    /* Generate random vector (by default, generates a vector with all components in [0, 1]) */
+    /* Generate random vector with real components in the interval [min, max] ([0, 1] by default) */
     static auto random(double min = 0, double max = 1) {
         return Vec3D{rand_double(min, max), rand_double(min, max), rand_double(min, max)};
     }
 
-    /* Generate random unit vector */
+    /* Generates an unformly random unit vector */
     static auto random_unit_vector() {
         /* Generate a random vector in the unit sphere, then normalize it (turn it into
         an unit vector). This ensures that each unit vector has a theoretically equal
-        probability of being generated. */
+        probability of being generated, unlike simply returning Vec3D::random(-1, 1). */
         Vec3D result;
         do {
             result = Vec3D::random(-1, 1);
@@ -75,7 +75,10 @@ auto operator* (const Vec3D &a, double d) {auto ret = a; ret *= d; return ret;}
 auto operator* (double d, const Vec3D &a) {return a * d;}
 auto operator/ (const Vec3D &a, double d) {auto ret = a; ret /= d; return ret;}
 
-/* Dot and cross product of two vectors*/
+/* Dot and cross product of two vectors. Note that these are not static because
+in OOP, static functions ought to not depend on the values of the member variables,
+or on the existence of actual instances of the class which they are a static member of.
+See https://softwareengineering.stackexchange.com/a/113034/426687. */
 auto dot(const Vec3D &a, const Vec3D &b) {return a.x * b.x + a.y * b.y + a.z * b.z;}
 auto cross(const Vec3D &a, const Vec3D &b) {
     return Vec3D{a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};

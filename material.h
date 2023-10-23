@@ -15,11 +15,6 @@ struct scatter_info {
     accounted for). TODO: Elaborate on why this color is named "attenuation". */
     RGB attenuation;
 
-    /* Converts to `true` if it represents a successful ray scattering, and false if not.
-    TODO: Determine when a ray can be UNsuccessfully scattered and decide on how that will be
-    indicated */
-    operator bool() {return true;}
-
     scatter_info(const Ray3D &ray_, const RGB &attenuation_)
         : ray{ray_}, attenuation{attenuation_} {}
 };

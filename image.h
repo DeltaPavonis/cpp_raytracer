@@ -129,10 +129,11 @@ public:
                 int r, g, b;
                 if (!(fin >> r >> g >> b)) {
                     std::cout << "Error: In Image::from_ppm_file(\"" << file_name << "\"), failed "
-                                "to parse color #" << (row * image_width) + col + 1 << "color "
-                                "(three integers (r, g, b))" << std::endl;
+                                "to parse color #" << (row * image_width) + col + 1 <<
+                                " (three integers (r, g, b))" << std::endl;
                     std::exit(-1);
                 }
+                
                 ppm_data[row][col] = RGB::from_rgb(r, g, b, max_magnitude);
             }
         }
@@ -141,10 +142,11 @@ public:
     }
 };
 
-/* `ImagePPMStream` progressively prints the `RGB` pixels of an image with a specified width and
-height to a specified file. Unlike `Image`, it does not allow access to the pixels of the image,
-because it does not store the 2D array of pixels representing the image, which saves storage.
-Thus, for images that need post-processing, the `Image` type is more appropriate. */
+/* `ImagePPMStream` progressively takes in the `RGB` pixels of an image with a specified width and
+height, in the order of top to bottom then left to right, and prints those pixels to a specified
+file. Unlike `Image`, it does not allow access to the pixels of the image, because it does not store
+the 2D array of pixels representing the image, which saves storage. Thus, for images that need
+post-processing, the `Image` type is more appropriate. */
 class ImagePPMStream {
     std::string file;
     std::ofstream fout;

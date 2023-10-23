@@ -1,6 +1,6 @@
 CXX := g++-11
 
-CXXFLAGS := -std=c++20 -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wpedantic -Weffc++ -Wold-style-cast -Wshadow -Wcast-qual -Wwrite-strings -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Wformat-overflow -Wformat-truncation -Wundef -fno-common -Wconversion -fdiagnostics-show-option -fdiagnostics-color=auto -Wuninitialized -Wno-unused-function -fstrict-aliasing -D_FORTIFY_SOURCE=2 -fstack-protector-strong -Wno-unused -Wno-unused-result -Wno-unused-parameter -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wuseless-cast -Wdouble-promotion
+CXXFLAGS := -std=c++20 -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wpedantic -Wold-style-cast -Wshadow -Wcast-qual -Wwrite-strings -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Wformat-overflow -Wformat-truncation -Wundef -fno-common -Wconversion -fdiagnostics-show-option -fdiagnostics-color=auto -Wuninitialized -Wno-unused-function -fstrict-aliasing -D_FORTIFY_SOURCE=2 -fstack-protector-strong -Wno-unused -Wno-unused-result -Wno-unused-parameter -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wuseless-cast -Wdouble-promotion
 # Consider adding -Wsign-conversion to the above
 CXXFLAGS += -MMD -MP
 CXXFLAGS += -I /home/kxiao/devel/competitive/kxlib # for kx.h
