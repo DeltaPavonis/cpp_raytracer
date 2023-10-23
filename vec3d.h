@@ -18,11 +18,13 @@ struct Vec3D {
     auto& operator*= (double d) {x *= d; y *= d; z *= d; return *this;}
     auto& operator/= (double d) {x /= d; y /= d; z /= d; return *this;}
 
-    /* Compute magnitude (length) and squared magnitude */
+    /* Compute magnitude (length) of this vector */
     auto mag() const {return std::sqrt(x * x + y * y + z * z);}
+    /* Compute squared magnitude (squared length) of this vector */
     auto mag_squared() const {return x * x + y * y + z * z;}
 
     /* Compute unit vector (forward declared) */
+
     Vec3D unit_vector() const;
 
     /* Returns `true` if all three components have magnitude strictly less than `epsilon` */
@@ -90,8 +92,11 @@ std::ostream& operator<< (std::ostream& os, const Vec3D &v) {
     return os;
 }
 
-/* Unit vector is found by dividing the vector by its length/magnitude */
-Vec3D Vec3D::unit_vector() const {return *this / this->mag();}
+/* Returns the unit vector of this `Vec3D`. */
+Vec3D Vec3D::unit_vector() const {
+    /* Unit vector is found by dividing the vector by its length/magnitude */
+    return *this / this->mag();
+}
 
 /* Now implement `random_unit_vector_on_hemisphere`, after `dot` has been defined. */
 

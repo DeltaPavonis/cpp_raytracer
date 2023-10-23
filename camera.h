@@ -218,19 +218,22 @@ public:
     auto& set_camera_center(const Point3D &p) {camera.origin = p; return *this;}
     /* Sets the camera direction to the vector `dir`. */
     auto& set_camera_direction(const Vec3D &dir) {camera.dir = dir; return *this;}
-    /* Sets the point that the camera looks at from the camera center. */
+    /* Sets the direction of the camera to be the direction from the camera center
+    to the point `p`. */
     auto& set_camera_lookat(const Point3D &p) {camera.dir = p - camera.origin; return *this;}
     /* Set the focus distance (the distance from the camera center to the plane of perfect
     focus). */
     auto& set_focus_distance(double focus_distance) {focus_dist = focus_distance; return *this;}
     /* Set the defocus angle of the camera (the angle of the cone with apex at the center of the
     viewpoint and with base as the defocus disk, which is centered at the camera center) to
-    `defocus_angle_degrees` DEGREES. note that setting the defocus angle to 0 eliminates all blur,
-    making everything render in perfect focus. */
+    `defocus_angle_degrees` DEGREES, not radians. Note that setting the defocus angle to 0
+    eliminates all blur, making everything render in perfect focus, which can also be accomplished
+    by using `Camera::turn_blur_off()`. */
     auto& set_defocus_angle(double defocus_angle_degrees) {
         defocus_angle = defocus_angle_degrees * std::numbers::pi / 180;  /* convert to radians */
         return *this;
     }
+    /* Causes this Camera to render the whole scene in perfect focus, with no defocus blur. */
     auto& turn_blur_off() {defocus_angle = 0; return *this;}
     /* Sets the "camera up" direction to the vector `dir`. The true camera up direction will be
     determined by taking the projection of `dir` onto the viewport. */
@@ -259,7 +262,7 @@ public:
         /* Make sure width is at least 1 */
         return set_image_dimensions(std::max(size_t{1}, width), height);
     }
-    /* Sets the number of rays sampled for each pixel to `rays_per_pixel_`. */
+    /* Sets the number of rays sampled for each pixel to `samples`. */
     auto& set_samples_per_pixel(size_t samples) {samples_per_pixel = samples; return *this;}
     /* Sets the maximum recursive depth for the camera (the maximum number of bounces for
     a given light ray) to `max_depth_`. */

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <string>
 #include "rand_util.h"
+#include "interval.h"
 
 /* Returns the gamma-encoded value of the magnitude `d`, under a gamma of `gamma` (2 by default). */
 auto linear_to_gamma(double d, double gamma = 2) {
@@ -51,7 +52,7 @@ public:
     static RGB zero() {return from_mag(0);}
 
     /* Creates a RGB with random red, green, and blue components, each a real number
-    in the range [`min`, `max`] */
+    in the range [`min`, `max`] (by default [0, 1]). */
     static RGB random(double min = 0, double max = 1) {
         return from_mag(rand_double(min, max), rand_double(min, max), rand_double(min, max));
     }
@@ -62,14 +63,17 @@ public:
     auto& operator*= (double d) {r *= d; g *= d; b *= d; return *this;}
     auto& operator/= (double d) {r /= d; g /= d; b /= d; return *this;}
 
-    /* Returns this `RGB` object gamma-encoded, and as a string.
-    `delimiter`: What is printed between the red, green, and blue components. A space by default.
-    `surrounding`: What is printed at the beginning and the end; if empty, then nothing is printed.
-    Otherwise, the first and second characters are printed directly before and after the numbers,
-    respectively.
-    `max_magnitude`: Represents the "full" magnitudes of red, green, and blue. 255 by default.
-    `gamma`: The encoding gamma for gamma correction. 2 by default. If the raw values of the RGB
-    intensities are desired, set `gamma` to 1.
+    /* 
+    @brief Returns this `RGB` object gamma-encoded, and as a string.
+    @param `delimiter`: What is printed between the red, green, and blue components. A space by
+    default.
+    @param `surrounding`: What is printed at the beginning and the end; if empty, then nothing is
+    printed. Otherwise, the first and second characters are printed directly before and after 
+    the numbers, respectively.
+    @param `max_magnitude`: Represents the "full" magnitudes of red, green, and blue. 255 by
+    default.
+    @param `gamma`: The encoding gamma for gamma correction. 2 by default. If the raw values of
+    the RGB intensities are desired, set `gamma` to 1.
     */
     auto as_string(std::string delimiter = " ", std::string surrounding = "",
                    double max_magnitude = 255, double gamma = 2) const
@@ -90,8 +94,18 @@ auto operator* (double d, const RGB &a) {return a * d;}
 auto operator* (const RGB &a, const RGB &b) {return RGB::from_mag(a.r * b.r, a.g * b.g, a.b * b.b);}
 
 /* Returns a color linearly interpolated, with a proportion of `1 - d` of `a` and
-a proportion of `d` of `b`. */
+a proportion of `d` of `b`. `d` must be in the range [0, 1]; if not, then an error
+is raised. */
 auto lerp(const RGB &a, const RGB &b, double d) {
+
+    /* Raise an error if `d` is not in the range [0, 1]. */
+    if (!Interval(0, 1).contains_inclusive(d)) {
+        std::cout << "Error: In `lerp(" << a.as_string(", ", "()", 255, 1) << ", "
+                  << b.as_string(", ", "()", 255, 1) << ", " << d << "), lerp proportion "
+                  << d << " is not in the range [0, 1]." << std::endl;
+        std::exit(-1);
+    }
+
     return RGB::from_mag(
         (1 - d) * a.r + d * b.r,
         (1 - d) * a.g + d * b.g,
