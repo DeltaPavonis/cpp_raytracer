@@ -41,6 +41,7 @@ struct hit_info {
     Again, `outward_unit_surface_normal` is assumed to be an unit vector. */
     hit_info(double hit_time_, const Point3D &hit_point_, const Vec3D &outward_unit_surface_normal,
              const Ray3D &ray, std::shared_ptr<Material> material_)
+        : hit_time{hit_time_}, hit_point{hit_point_}, material{material_}
     {
         /* Determine, based on the directions of the ray and the outward surface normal at
         the ray's point of intersection, whether the ray was shot from inside the surface
