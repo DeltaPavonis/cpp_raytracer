@@ -43,10 +43,12 @@ public:
         } else {
             /* See https://en.wikipedia.org/wiki/Netpbm#PPM_example */
             fout << "P3\n" << w << " " << h << "\n255\n";
-            for (ProgressBar<size_t> row(0, h, "Storing PPM image"); row(); ++row) {
+            ProgressBar pb(h, "Storing PPM image to " + destination);
+            for (size_t row = 0; row < h; ++row) {
                 for (size_t col = 0; col < w; ++col) {
                     fout << pixels[row][col].as_string() << '\n';
                 }
+                pb.update();
             }
 
             std::cout << "Image successfully saved to \"" << destination << "\"" << std::endl;

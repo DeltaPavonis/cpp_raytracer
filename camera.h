@@ -172,7 +172,8 @@ public:
 
         /* Calculate color of each pixel and write it to the file */
         auto img = ImagePPMStream::with_dimensions(image_w, image_h, file_name);
-        for (ProgressBar<size_t> row(0, image_h, "Rendering to " + file_name); row(); ++row) {
+        ProgressBar pb(image_h, "Rendering to " + file_name);
+        for (size_t row = 0; row < image_h; ++row) {
             for (size_t col = 0; col < image_w; ++col) {
 
                 /* Shoot `samples_per_pixel` random rays through the current pixel.
@@ -186,6 +187,8 @@ public:
 
                 img.add(pixel_color);
              }
+
+             pb.update();
         }
     }
     
@@ -194,7 +197,9 @@ public:
 
         /* Calculate and store the color of each pixel */
         auto img = Image::with_dimensions(image_w, image_h);
-        for (ProgressBar<size_t> row(0, image_h, "Rendering"); row(); ++row) {
+        
+        ProgressBar pb(image_h, "Rendering and storing image");
+        for (size_t row = 0; row < image_h; ++row) {
             for (size_t col = 0; col < image_w; ++col) {
 
                 /* Shoot `samples_per_pixel` random rays through the current pixel.
@@ -208,6 +213,8 @@ public:
 
                 img[row][col] = pixel_color;
              }
+
+             pb.update();
         }
         return img;
     }
