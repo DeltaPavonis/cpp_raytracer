@@ -8,6 +8,11 @@ auto seconds_diff(const std::chrono::time_point<T> &start, const std::chrono::ti
     return std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
 }
 
+template<typename T>
+auto ms_diff(const std::chrono::time_point<T> &start, const std::chrono::time_point<T> &end) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+}
+
 /* Converts seconds into days/hours/minutes/seconds of the format
 "[] days [] minutes [] hours [] seconds". If a quantity is 0 then
 it and its corresponding time unit are left out. */

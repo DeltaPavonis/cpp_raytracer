@@ -1,12 +1,14 @@
 #ifndef PROGRESS_BAR_H
 #define PROGRESS_BAR_H
 
+#include <mutex>
 #include "time_util.h"
 
 /* ProgressBar displays a progress bar for time-costly for-loops
 that have a number of iterations that is known beforehand (i.e.
 the loop variable is updated by a constant amount each iteration).
 If DISABLE_PRINTING is true, then the progress bar will not print.
+ProgressBar is thread-safe.
 
 Usage:
 
@@ -30,7 +32,6 @@ This was much more convenient; the `ProgressBar` only needs to be alive inside t
 (0 and 100 here) once.
 
 */
-
 template <bool DISABLE_PRINTING = false>
 class ProgressBar {
     using clock_type = std::chrono::high_resolution_clock;
@@ -41,10 +42,15 @@ class ProgressBar {
     std::string desc;
     instant start_time;
     std::string time_left;
+    std::mutex mtx;
 
 public:
 
+    /* Increments the number of iterations done, and updates the progrss bar as well
+    as the estimated time left. Thread-safe. */
     void update() {
+        std::lock_guard guard(mtx);  /* Ensure only one thread can execute `update()` at a time */
+
         ++iter_done;
 
         auto curr = static_cast<double>(iter_done) / static_cast<double>(total_iter);
@@ -62,7 +68,8 @@ public:
             Estimated time left = (time passed so far) * (iterations left / iterations done)
             = (time passed so far) * (total_iter - iter_done) / iter_done
             = (time passed so far) * (1/curr - 1) */
-            long long seconds_left = seconds_diff(start_time, clock_type::now()) * (1 / curr - 1);
+            auto seconds_now = static_cast<double>(ms_diff(start_time, clock_type::now())) / 1000;
+            auto seconds_left = static_cast<long long>(seconds_now * (1/curr - 1));
 
             time_left = " (Estimated time left: " + seconds_to_dhms(seconds_left) + ")";
             if constexpr (!DISABLE_PRINTING) {
@@ -76,7 +83,8 @@ public:
 
         if (iter_done == total_iter) {
             std::cout << "\n" << desc << ": Finished in "
-                      << seconds_to_dhms(seconds_diff(start_time, clock_type::now())) << std::endl;
+                      << seconds_to_dhms(seconds_diff(start_time, clock_type::now())) << '\n'
+                      << std::endl;
         }
     }
 
