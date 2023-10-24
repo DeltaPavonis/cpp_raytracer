@@ -199,6 +199,7 @@ public:
         auto img = Image::with_dimensions(image_w, image_h);
         
         ProgressBar pb(image_h, "Rendering and storing image");
+        #pragma omp parallel for
         for (size_t row = 0; row < image_h; ++row) {
             for (size_t col = 0; col < image_w; ++col) {
 
