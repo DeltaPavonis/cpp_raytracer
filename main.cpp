@@ -4,41 +4,10 @@
 #include "material.h"
 #include "camera.h"
 
-Scene world;
-
-auto ray_color(const Ray3D &ray, size_t depth_left) {
-
-    /* If the ray has bounced the maximum number of times, then no light is collected
-    from it. Thus, we return the RGB color (r: 0, g: 0, b: 0). */
-    if (depth_left == 0) {
-        return RGB::zero();
-    }
-
-    /* Interval::with_min(0.00001) is the book's fix for shadow acne; ignore
-    ray collisions that happen at very small times. */
-    if (auto info = world.hit_by(ray, Interval::with_min(0.00001)); info) {
-
-        /* If this ray hits an object in the scene, compute the scattered ray and the
-        color attenuation, and return attenuation * ray_color(scattered ray).*/
-        if (auto scattered = info->material->scatter(ray, *info); scattered) {
-            return scattered->attenuation * ray_color(scattered->ray, depth_left - 1);
-        }
-        
-        /* If the ray is not scattered (because it is absorbed, maybe? TODO: elaborate)
-        then no light is gathered. */
-        return RGB::zero();
-    } else {
-        /* If this ray doesn't intersect any object in the scene, then its color is determined
-        by the background. Here, the background is a blue-to-white gradient depending on the ray's
-        y-coordinate; bluer for lesser y-coordinates and whiter for larger y-coordinates (so bluer
-        at the top and whiter at the bottom). */
-        return lerp(RGB::from_mag(1, 1, 1), RGB::from_mag(0.5, 0.7, 1),
-                    0.5 * ray.dir.unit_vector().y + 0.5);
-    }
-}
-
 int main()
 {
+    Scene world;
+
     /* The same code as from the tutorial for their final scene, with one change (see comment)
     on line 52) */
 
@@ -95,8 +64,9 @@ int main()
             .set_defocus_angle(0.6)
             .set_focus_distance(10)
             .set_samples_per_pixel(500)  /* For a high-quality image */
-            .set_max_depth(50)  /* More light bounces for higher quality */
-            .render_to(ray_color, "rtweekend_final_image.ppm");
+            .set_max_depth(20)  /* More light bounces for higher quality */
+            .render(world)
+            .send_as_ppm("rtweekend_final_image.ppm");
 
     return 0;
 }

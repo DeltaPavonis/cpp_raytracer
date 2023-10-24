@@ -163,10 +163,43 @@ class Camera {
         return Ray3D(ray_origin, pixel_sample - ray_origin);
     }
 
+    /* Computes and returns the color of the light ray `ray` shot into the scene `world`.
+    If `ray` has bounced more than `depth_left` times, returns `RGB::zero()`. */
+    auto ray_color(const Ray3D &ray, size_t depth_left, const Scene &world) {
+
+        /* If the ray has bounced the maximum number of times, then no light is collected
+        from it. Thus, we return the RGB color (r: 0, g: 0, b: 0). */
+        if (depth_left == 0) {
+            return RGB::zero();
+        }
+
+        /* Interval::with_min(0.00001) is the book's fix for shadow acne; ignore
+        ray collisions that happen at very small times. */
+        if (auto info = world.hit_by(ray, Interval::with_min(0.00001)); info) {
+
+            /* If this ray hits an object in the scene, compute the scattered ray and the
+            color attenuation, and return attenuation * ray_color(scattered ray).*/
+            if (auto scattered = info->material->scatter(ray, *info); scattered) {
+                return scattered->attenuation * ray_color(scattered->ray, depth_left - 1, world);
+            }
+            
+            /* If the ray is not scattered (because it is absorbed, maybe? TODO: elaborate)
+            then no light is gathered. */
+            return RGB::zero();
+        } else {
+            /* If this ray doesn't intersect any object in the scene, then its color is determined
+            by the background. Here, the background is a blue-to-white gradient depending on the ray's
+            y-coordinate; bluer for lesser y-coordinates and whiter for larger y-coordinates (so bluer
+            at the top and whiter at the bottom). */
+            return lerp(RGB::from_mag(1, 1, 1), RGB::from_mag(0.5, 0.7, 1),
+                        0.5 * ray.dir.unit_vector().y + 0.5);
+        }
+    }
+
 public:
 
     /* Renders the Scene `world` to an `Image` and returns that image */
-    Image render(const auto &ray_color) {
+    Image render(const Scene &world) {
         init();
 
         /* Calculate and store the color of each pixel */
@@ -182,7 +215,7 @@ public:
                 auto pixel_color = RGB::zero();
                 for (size_t sample = 0; sample < samples_per_pixel; ++sample) {
                     auto ray = random_ray_through_pixel(row, col);
-                    pixel_color += ray_color(ray, max_depth);
+                    pixel_color += ray_color(ray, max_depth, world);
                 }
                 pixel_color /= static_cast<double>(samples_per_pixel);
 
