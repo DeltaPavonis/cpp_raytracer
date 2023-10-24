@@ -165,33 +165,7 @@ class Camera {
 
 public:
 
-    /* NOTE: `render_to` just takes the function `ray_color` as a parameter for now, because
-    `hittable` has not been fully implemented. */
-    void render_to(const auto &ray_color, const std::string &file_name) {
-        init();
-
-        /* Calculate color of each pixel and write it to the file */
-        auto img = ImagePPMStream::with_dimensions(image_w, image_h, file_name);
-        ProgressBar pb(image_h, "Rendering to " + file_name);
-        for (size_t row = 0; row < image_h; ++row) {
-            for (size_t col = 0; col < image_w; ++col) {
-
-                /* Shoot `samples_per_pixel` random rays through the current pixel.
-                The average of the resulting colors will be the color for this pixel. */
-                auto pixel_color = RGB::zero();
-                for (size_t sample = 0; sample < samples_per_pixel; ++sample) {
-                    auto ray = random_ray_through_pixel(row, col);
-                    pixel_color += ray_color(ray, max_depth);
-                }
-                pixel_color /= static_cast<double>(samples_per_pixel);
-
-                img.add(pixel_color);
-             }
-
-             pb.update();
-        }
-    }
-    
+    /* Renders the Scene `world` to an `Image` and returns that image */
     Image render(const auto &ray_color) {
         init();
 
