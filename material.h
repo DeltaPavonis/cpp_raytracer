@@ -1,6 +1,7 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
+#include <iostream>
 #include "rgb.h"
 #include "ray3d.h"
 #include "hittable.h"
@@ -20,10 +21,23 @@ struct scatter_info {
 };
 
 struct Material {
+    /* Calculate the ray resulting from the scattering of the incident ray `ray` when it hits
+    this `Material` with hit information (hit point, hit time, etc) specified by `hit_info`. Note
+    that if the ray is not scattered (when it is absorbed by the material), an empty `std::optional`
+    is returneds. */
     virtual std::optional<scatter_info> scatter(const Ray3D &ray, const hit_info &info) const = 0;
+
+    /* Prints this `Material` object to the `std::ostream` specified by `os`. */
+    virtual void print_to(std::ostream &os) const = 0;
 
     virtual ~Material() = default;
 };
+
+/* Overload `operator<<` to for `Material` to allow printing it to output streams */
+std::ostream& operator<< (std::ostream &os, const Material &mat) {
+    mat.print_to(os);  /* Call the overriden `print_to` function for the type of `mat` */
+    return os;
+}
 
 class Lambertian : public Material {
     /* `intrinsic_color` = The color intrinsic to this Lambertian reflector */
@@ -53,6 +67,11 @@ public:
         on the unit sphere centered at the unit surface normal's endpoint, and the attenuation
         is the same as the intrinsic color. */
         return scatter_info(Ray3D(info.hit_point, scattered_direction), intrinsic_color);
+    }
+
+    /* Prints this `Lambertian` material to the `std::ostream` specified by `os`. */
+    void print_to(std::ostream &os) const override {
+        os << "Lambertian {color: " << intrinsic_color.as_string(", ", "()") << "} " << std::flush;
     }
 
     /* Constructs a Lambertian (diffuse) reflector with intrinsic color `intrinsic_color_`. */
@@ -89,6 +108,12 @@ public:
         on the unit sphere centered at the unit surface normal's endpoint, and the attenuation
         is the same as the intrinsic color. */
         return scatter_info(Ray3D(info.hit_point, scattered_dir), intrinsic_color);
+    }
+
+    /* Prints this `Metal` material to the `std::ostream` specified by `os`. */
+    void print_to(std::ostream &os) const override {
+        os << "Metal {color: " << intrinsic_color.as_string(", ", "()") << ", fuzz factor: "
+           << fuzz_factor << "} " << std::flush;
     }
 
     /* Constructs a metal (specular) reflector with intrinsic color `intrinsic_color_`
@@ -151,6 +176,11 @@ public:
         dielectric surfaces? Maybe for tinted glass it doesn't, but our current implementation
         of Dielectric doesn't have a field for intrinsic color or tint. */
         return scatter_info(Ray3D(info.hit_point, dir), RGB::from_mag(1, 1, 1));
+    }
+    
+    /* Prints this `Dielectric` material to the `std::ostream` specified by `os`. */
+    void print_to(std::ostream &os) const override {
+        os << "Dielectric {refractive index: " << refr_index << "} " << std::flush;
     }
 
     /* Constructs a dielectric reflector with refractive index `refractive_index`. */

@@ -10,7 +10,7 @@
 #include "interval.h"
 
 /* Forward-declare the class `Material` to avoid circular dependencies of
-"material.h" and "hittable.h" */
+"material.h" and "hittable.h" on each other */
 class Material;
 
 struct hit_info {
@@ -75,7 +75,16 @@ struct Hittable {
     class, which means it itself cannot be instantiated (good, it's only an interface). */
     virtual std::optional<hit_info> hit_by(const Ray3D &ray, const Interval &ray_times) const = 0;
 
+    /* Prints this `Hittable` object */
+    virtual void print_to(std::ostream &os) const = 0;
+
     virtual ~Hittable() = default;
 };
+
+/* Overload `operator<<` for `Hittable` to allow printing it to output streams */
+std::ostream& operator<< (std::ostream &os, const Hittable &object) {
+    object.print_to(os);  /* Call the overriden `print_to` function for the type of `object` */
+    return os;
+}
 
 #endif

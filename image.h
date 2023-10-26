@@ -34,7 +34,7 @@ public:
 
     auto aspect_ratio() const {return static_cast<double>(w) / static_cast<double>(h);}
 
-    /* Prints this `Image` in PPM format to the file with name specified by `destination` */
+    /* Prints this `Image` in PPM format to the file with name specified by `destination`. */
     void send_as_ppm(const std::string &destination) {
         if (std::ofstream fout(destination); !fout.is_open()) {
             std::cout << "Error: In Image::print_as_ppm(), could not open the file \""

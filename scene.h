@@ -17,6 +17,15 @@ public:
         objects.push_back(object);
     }
 
+    /* Prints every object in this `Scene` to the `std::ostream` specified by `os`. */
+    virtual void print_to(std::ostream &os) const override {
+        for (const auto &object : objects) {
+            object->print_to(os);
+            os << '\n';
+        }
+        os << std::flush;
+    }
+
     /* Return the `hit_info` from the closest object hit by the 3D ray `ray` */
     std::optional<hit_info> hit_by(const Ray3D &ray,
                                    const Interval &ray_times = Interval::nonnegative())

@@ -63,6 +63,8 @@
         "map": "cpp",
         "iomanip": "cpp",
         "sstream": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "condition_variable": "cpp",
+        "mutex": "cpp"
     }
 }

@@ -1,6 +1,7 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
+#include <iostream>
 #include <memory>
 #include "hittable.h"
 #include "vec3d.h"
@@ -76,6 +77,14 @@ struct Sphere : public Hittable {
         auto hit_point = ray(root);  /* Evaluate this once */
         auto outward_unit_normal = (hit_point - center) / radius;
         return hit_info(root, hit_point, outward_unit_normal, ray, material);
+    }
+
+    /* Print this `Sphere` to the `std::ostream` `os`. Matches the Desmos 3D graphing
+    calculator format for spheres. */
+    void print_to(std::ostream &os) const override {
+        /* Desmos format is "sphere((x, y, z), radius)" */
+        os << "Sphere { center: " << center << ", radius: " << radius << ", material: " << *material
+           << "} " << std::flush;
     }
 
     /* Constructs a Sphere with center `center_`, radius `radius_`, and material

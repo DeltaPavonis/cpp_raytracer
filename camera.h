@@ -198,7 +198,8 @@ class Camera {
 
 public:
 
-    /* Renders the Scene `world` to an `Image` and returns that image */
+    /* Renders the Scene `world` to an `Image` and returns that image.
+    Will render in parallel (using OpenMP for now) if available. */
     Image render(const Scene &world) {
         init();
 
@@ -242,7 +243,7 @@ public:
     /* Set the defocus angle of the camera (the angle of the cone with apex at the center of the
     viewpoint and with base as the defocus disk, which is centered at the camera center) to
     `defocus_angle_degrees` DEGREES, not radians. Note that setting the defocus angle to 0
-    eliminates all blur, making everything render in perfect focus, which can also be accomplished
+    eliminates all blur, making everything render in perfect focus; this can also be accomplished
     by using `Camera::turn_blur_off()`. */
     auto& set_defocus_angle(double defocus_angle_degrees) {
         defocus_angle = defocus_angle_degrees * std::numbers::pi / 180;  /* convert to radians */
