@@ -30,7 +30,7 @@ OBJ := $(SRC:.cpp=.o)
 # DEP := $(SRC:.cpp=.d)
 DEP := $(SRC:.cpp=.dbg.d)
 DEP += $(SRC:.cpp=.rel.d)  
-# Now add both .dbg.d and .rel.d. Note the += not := (which would reset `DEP` )
+# Now add both .dbg.d and .rel.d. Note the += not := for the second DEP; := which would reset DEP, which is not what we want.
 # ^^ as for why we don't do .cpp=.d, it's because this Makefile doesn't seem to generate dependency files like "main.d".
 # Instead, it generates like main.dbg.d and main.rel.d. Perhaps `make` generates .d for .o files. Like main.o gets a main.d,
 # and now we instead have a .dbg.o and a .rel.o so it generates a .dbg.d and a .rel.d instead, so those are what we need to have the

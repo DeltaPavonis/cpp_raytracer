@@ -139,7 +139,7 @@ class Dielectric : public Material {
         See https://en.wikipedia.org/wiki/Schlick%27s_approximation. */
         auto r0 = (1 - refractive_index_ratio) / (1 + refractive_index_ratio);
         r0 *= r0;
-        return r0 + (1 - r0) * pow(1 - cos_theta, 5);
+        return r0 + (1 - r0) * std::pow(1 - cos_theta, 5);
     }
 
 public:

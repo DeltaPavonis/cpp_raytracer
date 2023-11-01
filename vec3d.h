@@ -23,13 +23,14 @@ struct Vec3D {
     /* Compute squared magnitude (squared length) of this vector */
     auto mag_squared() const {return x * x + y * y + z * z;}
 
-    /* Compute unit vector (forward declared) */
+    /* Compute unit vector (forward declared) since it requires operator/, which has
+    not yet been defined */
 
     Vec3D unit_vector() const;
 
     /* Returns `true` if all three components have magnitude strictly less than `epsilon` */
     auto near_zero(double epsilon = 1e-8) {
-        return (fabs(x) < epsilon) && (fabs(y) < epsilon) && (fabs(z) < epsilon);
+        return (std::fabs(x) < epsilon) && (std::fabs(y) < epsilon) && (std::fabs(z) < epsilon);
     }
 
     /* Generate random vector with real components in the interval [min, max] ([0, 1] by default) */
@@ -65,8 +66,7 @@ struct Vec3D {
     which is an OUTWARD surface normal at the same point on some surface as the random unit
     vector to be generated. Thus, this function returns an unit vector pointing out of
     a surface, from the same point as the given outward surface normal `surface_normal`.
-    
-    Forward-declared because the implementation requires `dot`, which has not been defined yet. */
+    as not been defined yet. */
     static auto random_unit_vector_on_hemisphere(const Vec3D &surface_normal);
 };
 

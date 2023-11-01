@@ -28,8 +28,8 @@ struct hit_info {
     Vec3D unit_surface_normal;
     /* `hit_from_outside` = Whether or not the ray hit the outside of the surface. */
     bool hit_from_outside = false;  /* Named `front_face` in the tutorial */
-    /* `material` = the `Material` of the object which the ray intersected */
-    std::shared_ptr<Material> material;
+    /* `material` points to the `Material` of the object which the ray intersected */
+    const Material* material;
 
     /* --- CONSTRUCTORS ---*/
 
@@ -40,8 +40,8 @@ struct hit_info {
     
     Again, `outward_unit_surface_normal` is assumed to be an unit vector. */
     hit_info(double hit_time_, const Point3D &hit_point_, const Vec3D &outward_unit_surface_normal,
-             const Ray3D &ray, std::shared_ptr<Material> material_)
-        : hit_time{hit_time_}, hit_point{hit_point_}, material{material_}
+             const Ray3D &ray, const std::shared_ptr<Material> &material_)
+        : hit_time{hit_time_}, hit_point{hit_point_}, material{material_.get()}
     {
         /* Determine, based on the directions of the ray and the outward surface normal at
         the ray's point of intersection, whether the ray was shot from inside the surface

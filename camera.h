@@ -70,7 +70,7 @@ class Camera {
         because `image_w` and `image_h` both must be integers. */
         auto aspect_ratio = static_cast<double>(image_w) / static_cast<double>(image_h);
 
-        /* If `focal_dist` is not explicitly provided by the user, then set it equal to
+        /* If `focus_dist` is not explicitly provided by the user, then set it equal to
         the length of the camera's direction vector. */
         if (std::isinf(focus_dist)) {focus_dist = camera.dir.mag();}
 

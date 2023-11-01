@@ -17,8 +17,8 @@ auto ms_diff(const std::chrono::time_point<T> &start, const std::chrono::time_po
 "[] days [] minutes [] hours [] seconds". If a quantity is 0 then
 it and its corresponding time unit are left out. */
 std::string seconds_to_dhms(long long seconds_left) {
-    const static std::array<std::pair<unsigned, std::string>, 5> conv{{
-        {604800, "week"}, {86400, "day"}, {3600, "hour"}, {60, "minute"}, {1, "second"}
+    const static std::array<std::pair<unsigned, std::string>, 4> conv{{
+        {86400, "day"}, {3600, "hour"}, {60, "minute"}, {1, "second"}
     }};
 
     std::string ret;
