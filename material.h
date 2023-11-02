@@ -24,7 +24,7 @@ struct Material {
     /* Calculate the ray resulting from the scattering of the incident ray `ray` when it hits
     this `Material` with hit information (hit point, hit time, etc) specified by `hit_info`. Note
     that if the ray is not scattered (when it is absorbed by the material), an empty `std::optional`
-    is returneds. */
+    is returned. */
     virtual std::optional<scatter_info> scatter(const Ray3D &ray, const hit_info &info) const = 0;
 
     /* Prints this `Material` object to the `std::ostream` specified by `os`. */
@@ -48,7 +48,7 @@ public:
     std::optional<scatter_info> scatter(const Ray3D &ray, const hit_info &info) const override {
 
         /* Lambertian reflectance states that an incident ray will be reflected (scattered) at an
-        angle of phi off the surface normal with probabiliyt cos(phi). This is equivalent to saying
+        angle of phi off the surface normal with probability cos(phi). This is equivalent to saying
         that the endpoint of the scattered ray is an uniformly random point on the unit sphere
         centered at the endpoint of the unit surface normal at the original ray's intersection
         point with the surface. */
@@ -156,14 +156,15 @@ public:
         /* Calculate direction of resulting ray. Try refraction, then if no refraction is
         possible under Snell's Law the ray must be reflected. Also, even if refraction
         is possible, the material will have a reflectance depending on the current angle;
-        we reflect the light ray with probability equal to the reflectance. */
-        auto dir = refracted(unit_dir, info.unit_surface_normal, refractive_index_ratio); 
-        if (std::isinf(dir.x)) {
-            /* If `std::isinf(dir.x)`, then this dielectric material cannot refract the light
-            ray, and so it must reflect it. */
+        we still reflect the light ray with probability equal to the reflectance. */
+        auto dir = refracted(unit_dir, info.unit_surface_normal, refractive_index_ratio);
+        if (!dir) {
+            /* If this dielectric material cannot refract the light ray, then it must reflect it.
+            This is the phenomenon of "Total Internal Reflection". */
             dir = reflected(unit_dir, info.unit_surface_normal);
         } else {
-            /* Reflect with probability equal to the reflectance of this dielectric object */
+            /* Even if this dielectric material can refract the light ray, it has a reflectance;
+            we reflect the light ray with probability equal to the reflectance. */
             auto cos_theta = std::fmin(dot(-unit_dir, info.unit_surface_normal), 1.);
             if (rand_double() < reflectance(cos_theta, refractive_index_ratio)) {
                 dir = reflected(unit_dir, info.unit_surface_normal);
@@ -175,7 +176,7 @@ public:
         because a glass surface absorbs nothing. Makes sense, but does this hold for ALL
         dielectric surfaces? Maybe for tinted glass it doesn't, but our current implementation
         of Dielectric doesn't have a field for intrinsic color or tint. */
-        return scatter_info(Ray3D(info.hit_point, dir), RGB::from_mag(1, 1, 1));
+        return scatter_info(Ray3D(info.hit_point, *dir), RGB::from_mag(1, 1, 1));
     }
     
     /* Prints this `Dielectric` material to the `std::ostream` specified by `os`. */

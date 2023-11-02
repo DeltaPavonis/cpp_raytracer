@@ -30,7 +30,7 @@ class Camera {
     `cam_basis_x` is an unit vector pointing to the right, `cam_basis_y` is an unit vector
     pointing up (so `cam_basis_x` and `cam_basis_y` form an orthonormal basis for the viewport),
     and `cam_basis_z` is an unit vector pointing behind the camera, orthogonal to the viewport
-    (it poitns behind the camera and not in front due to the use of right-handed coordinates.) */
+    (it points behind the camera and not in front due to the use of right-handed coordinates.) */
     Vec3D cam_basis_x{}, cam_basis_y{}, cam_basis_z{};
     /* `focus_dist` is this Camera's focus distance; that is, the distance from the
     camera center to the plane of perfect focus. Definition-wise, it is different
@@ -43,7 +43,7 @@ class Camera {
     will be determined during `init()`. */
     double focus_dist = std::numeric_limits<double>::infinity();
     /* `defocus_angle` is the angle of the cone with apex at the viewport's center and circular
-    base equivalent to the defocus disk (whic his centered at the camera center). A `defocus_angle`
+    base equivalent to the defocus disk (which is centered at the camera center). A `defocus_angle`
     of 0 represents no blur, and that is the default. `defocus_angle` is stored in radians. */
     double defocus_angle = 0;
     /* `defocus_disk_cam_basis_x/y` are the vectors representing the horizontal and vertical radii

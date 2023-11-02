@@ -84,7 +84,7 @@ public:
         return Image(img);
     }
 
-    /* Creates an image correspnoding to the PPM file with name `file_name`. */
+    /* Creates an image corresponding to the PPM file with name `file_name`. */
     static auto from_ppm_file(const std::string &file_name) {
 
         /* Try to open the file `file_name` */
@@ -171,7 +171,7 @@ public:
     /* Redirect this `ImagePPMStream` to print to the file `file_name`. Gives an error
     if `file_name` cannot be opened, and gives a warning if the file switch takes
     place in the middle of image printing (meaning the first file will be left with
-    an imcomplete PPM image) */
+    an incomplete PPM image) */
     void set_file(const std::string &file_name) {
         if (fout.open(file_name); !fout.is_open()) {  /* Could not open `file_name` */
             std::cout << "Error: In ImagePPMStream::set_file(), could not open the file \""

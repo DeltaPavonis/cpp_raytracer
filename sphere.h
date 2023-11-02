@@ -31,8 +31,10 @@ struct Sphere : public Hittable {
     not necessarily the ray (so if the sphere was located behind the camera, it could still be
     drawn). We will fix this in the future. */
 
-    /* `Sphere::hit_by(ray)` returns a `hit_info` object representing the minimum time of
-    intersection in the time range specified by `ray_times`, of `ray` with this Sphere. */
+    /* `Sphere::hit_by(ray)` returns a `std::optional<hit_info>` object representing the minimum
+    time of intersection in the time range specified by `ray_times`, of `ray` with this Sphere.
+    If `ray` does not hit this Sphere in the interval `ray_times`, an empty `std::optional` object
+    is returned. */
     std::optional<hit_info> hit_by(const Ray3D &ray, const Interval &ray_times) const override {    
 
         /* Set up quadratic formula calculation */
@@ -79,8 +81,7 @@ struct Sphere : public Hittable {
         return hit_info(root, hit_point, outward_unit_normal, ray, material);
     }
 
-    /* Print this `Sphere` to the `std::ostream` `os`. Matches the Desmos 3D graphing
-    calculator format for spheres. */
+    /* Print this `Sphere` to the `std::ostream` `os`. */
     void print_to(std::ostream &os) const override {
         /* Desmos format is "sphere((x, y, z), radius)" */
         os << "Sphere { center: " << center << ", radius: " << radius << ", material: " << *material

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <optional>
 #include "rand_util.h"
 
 /* Vec3D represents a 3-dimensional vector, or equivalently, a point in 3D space. */
@@ -38,7 +39,7 @@ struct Vec3D {
         return Vec3D{rand_double(min, max), rand_double(min, max), rand_double(min, max)};
     }
 
-    /* Generates an unformly random unit vector */
+    /* Generates an uniformly random unit vector */
     static auto random_unit_vector() {
         /* Generate a random vector in the unit sphere, then normalize it (turn it into
         an unit vector). This ensures that each unit vector has a theoretically equal
@@ -119,14 +120,20 @@ auto reflected(const Vec3D &v, const Vec3D &unit_normal) {
     return v - 2 * dot(v, unit_normal) * unit_normal;
 }
 
-/* Returns the direction that results when the UNIT vector `unit_vec` is refracted; specifically,
-`univ_vec` is some unit vector, `unit_normal` is an unit normal POINTING ON `unit_vec`'s SIDE
-OF THE INTERFACE (the line of intersection), and `refractive_index_ratio` is the ratio of the
-refractive index of the initial medium and the final medium.
-
-For instance, if going from a refractive index of 1.5 to a refractive index of 2,
-`refractive_index_ratio` should be set to 1.5 / 2 = 0.75. */
-auto refracted(const Vec3D &unit_vec, const Vec3D &unit_normal, double refractive_index_ratio) {
+/*
+@brief Returns the direction of the resulting ray when an incident ray with direction `unit_vec`
+is refracted at the interface (boundary) between two isotropic (uniform) media with a given
+refractive index ratio. If the ray cannot be refracted (under Snell's Law), then an empty
+`std::optional<Vec3D>` object is returned.
+@param `unit_dir`: The unit direction of the incoming ray. Assumed to be an unit vector.
+@param `unit_normal`: An unit normal to the interface, pointing on the side of `unit_dir`.
+@param `refractive_index_ratio`: The ratio of the refractive index of the medium the ray is
+initially passing through, to the refractive index of the medium the ray is passing into.
+For instance, if going from a medium with a refractive index of 1.5 to a medium with a refractive
+index of 2, `refractive_index_ratio` should be set to 1.5 / 2 = 0.75. */
+std::optional<Vec3D> refracted(const Vec3D &unit_dir, const Vec3D &unit_normal,
+                               double refractive_index_ratio)
+{
     /* Use Snell's Law to compute the direction of the unit vector `v` after transitioning
     from a medium with refractive index x to a medium with refractive index y, where
     `refractive_index_ratio` = x / y. */
@@ -134,7 +141,7 @@ auto refracted(const Vec3D &unit_vec, const Vec3D &unit_normal, double refractiv
     /* Use `std::fmin` to bound `cos_theta` from above by 1., just in case a floating-point
     inaccuracy occurs which makes it a little greater than 1.. This prevents the computation
     of `sin_theta` from taking the square root of a negative number. */
-    auto cos_theta = std::fmin(dot(-unit_vec, unit_normal), 1.);
+    auto cos_theta = std::fmin(dot(-unit_dir, unit_normal), 1.);
     auto sin_theta = std::sqrt(1 - cos_theta * cos_theta);
 
     /* By Snell's law, n1sin(theta_1) = n2sin(theta_2), where n1 and n2 are the refractive
@@ -143,18 +150,17 @@ auto refracted(const Vec3D &unit_vec, const Vec3D &unit_normal, double refractiv
     the resulting ray and the surface normal on the side of the final medium. Clearly, a
     solution to theta_2 exists if and only if (n1/n2) * sin(theta_1) <= 1 (we already know this
     is >= 0 because n1/n2 >= 0 and 0 <= theta_1 <= 90 degrees). Thus, if
-    `refractive_index_ratio sin_theta` > 1, there is no solution and thus no refracted ray. */
+    `refractive_index_ratio * sin_theta` > 1, there is no solution and thus no refracted ray. */
     if (refractive_index_ratio * sin_theta > 1) {
-        /* This ray cannot be refracted. It must be reflected. */
-        return Vec3D{std::numeric_limits<double>::infinity(),
-                     std::numeric_limits<double>::infinity(),
-                     std::numeric_limits<double>::infinity()};
+        /* This ray cannot be refracted under Snell's Law as-is. We report this by returning an
+        empty `std::optional<Vec3D>`, and allow the caller to decide what should be done. */
+        return {};
     }
 
     /* Individually compute the components of the resulting vector that are perpendicular
     and parallel to the surface normal on the side of the final medium, and then sum them
     to get the resulting vector. */
-    auto v_out_perp = refractive_index_ratio * (unit_vec + cos_theta * unit_normal);
+    auto v_out_perp = refractive_index_ratio * (unit_dir + cos_theta * unit_normal);
     auto v_out_para = -std::sqrt(std::fabs(1 - v_out_perp.mag_squared())) * unit_normal;
     return v_out_perp + v_out_para;
 }
