@@ -14,7 +14,11 @@ public:
     void add(std::shared_ptr<Hittable> object) {
         /* Pass `shared_ptr` by copy, so this `Scene` will keep the object alive
         as long as it itself has not been destroyed */
-        objects.push_back(object);
+
+        /* Use `std::move` when inserting the `std::shared_ptr` into the `std::vector`
+        of `Hittable`s. Passing the `std::shared_ptr<Hittable>` by copy and then
+        moving it follows R34 of the C++ Core Guidelines (see https://tinyurl.com/bdfjfrub). */
+        objects.push_back(std::move(object));
     }
 
     /* Prints every object in this `Scene` to the `std::ostream` specified by `os`. */
@@ -27,9 +31,7 @@ public:
     }
 
     /* Return the `hit_info` from the closest object hit by the 3D ray `ray` */
-    std::optional<hit_info> hit_by(const Ray3D &ray,
-                                   const Interval &ray_times = Interval::nonnegative())
-    const override {  
+    std::optional<hit_info> hit_by(const Ray3D &ray, const Interval &ray_times) const override {
 
         std::optional<hit_info> result;
         auto min_hit_time = ray_times.max;
