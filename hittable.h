@@ -8,6 +8,7 @@
 #include <optional>
 #include "ray3d.h"
 #include "interval.h"
+#include "aabb.h"
 
 /* Forward-declare the class `Material` to avoid circular dependencies of
 "material.h" and "hittable.h" on each other */
@@ -48,8 +49,8 @@ struct hit_info {
         or from outside the surface. */
         if (dot(ray.dir, outward_unit_surface_normal) > 0) {
             /* Then the angle between the ray and the outward surface normal is in [0, 90) degrees,
-            which means the ray originated INSIDE the object. */
-            unit_surface_normal = -outward_unit_surface_normal;  /* So flip outward surface normal */
+            which means the ray originated INSIDE the object. So: */
+            unit_surface_normal = -outward_unit_surface_normal;  /* Flip outward surface normal */
             hit_from_outside = false;
         } else {
             /* Then the angle between the ray and the outward surface normal is in [90, 180)
@@ -70,10 +71,13 @@ std::ostream& operator<< (std::ostream &os, const hit_info &info) {
 
 struct Hittable {
     
-    /* Check if the object is hit by a ray in the time range (t_min, t_max).
+    /* Check if the object is hit by a ray in the time range specified by `ray_times`.
     = 0 causes `hit_by` to be a pure virtual function, and so `Hittable` is an abstract
     class, which means it itself cannot be instantiated (good, it's only an interface). */
     virtual std::optional<hit_info> hit_by(const Ray3D &ray, const Interval &ray_times) const = 0;
+
+    /* Returns the AABB (Axis-Aligned Bounding Box) for this `Hittable` object */
+    virtual AABB get_aabb() const = 0;
 
     /* Prints this `Hittable` object */
     virtual void print_to(std::ostream &os) const = 0;

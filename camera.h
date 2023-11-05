@@ -15,9 +15,9 @@ class Camera {
     size_t image_w = 1280, image_h = 720;
     /* Width and height of the viewport (aka image plane). Note that these are real-valued.
     Both are determined by either `vertical_fov` or `horizontal_fov` during `init()`. */
-    double viewport_w{}, viewport_h{};
+    double viewport_w, viewport_h;
     /* The horizontal and vertical delta vectors from pixel to pixel. */
-    Vec3D pixel_delta_x{}, pixel_delta_y{};
+    Vec3D pixel_delta_x, pixel_delta_y;
     /* `camera` stores the camera ray; the coordinates of the camera/eye point,
     and the direction in which the camera looks. */
     Ray3D camera{.origin = Point3D{0, 0, 0}, .dir = Vec3D{0, 0, -1}};
@@ -30,8 +30,10 @@ class Camera {
     `cam_basis_x` is an unit vector pointing to the right, `cam_basis_y` is an unit vector
     pointing up (so `cam_basis_x` and `cam_basis_y` form an orthonormal basis for the viewport),
     and `cam_basis_z` is an unit vector pointing behind the camera, orthogonal to the viewport
-    (it points behind the camera and not in front due to the use of right-handed coordinates.) */
-    Vec3D cam_basis_x{}, cam_basis_y{}, cam_basis_z{};
+    (it points behind the camera and not in front due to the use of right-handed coordinates).
+    Calculated in `init()`, depends on `camera` and `view_up_dir` (and themselves; `cam_basis_z`
+    is calculated by taking the cross product of `cam_basis_x` and `cam_basis_y`). */
+    Vec3D cam_basis_x, cam_basis_y, cam_basis_z;
     /* `focus_dist` is this Camera's focus distance; that is, the distance from the
     camera center to the plane of perfect focus. Definition-wise, it is different
     from the focal length, which is the distance from the camera center to the viewport.
@@ -44,15 +46,17 @@ class Camera {
     double focus_dist = std::numeric_limits<double>::infinity();
     /* `defocus_angle` is the angle of the cone with apex at the viewport's center and circular
     base equivalent to the defocus disk (which is centered at the camera center). A `defocus_angle`
-    of 0 represents no blur, and that is the default. `defocus_angle` is stored in radians. */
+    of 0 represents no blur, and that is the default. `defocus_angle` is stored in radians. May
+    be explicitly set by the user through `set_defocus_angle`. */
     double defocus_angle = 0;
-    /* `defocus_disk_cam_basis_x/y` are the vectors representing the horizontal and vertical radii
-    vectors of the defocus disk. */
-    Vec3D defocus_disk_x{}, defocus_disk_y{};
+    /* `defocus_disk_x/y` are the vectors representing the horizontal and vertical radii vectors
+    of the defocus disk. Both are determined by `focal_length`, `defocus_angle`,  and
+    `cam_basis_x/y`. */
+    Vec3D defocus_disk_x, defocus_disk_y;
     /* Coordinates of the top-left image pixel */
-    Point3D pixel00_loc{};
-    /* Number of rays sampled per pixel, 50 by default */
-    size_t samples_per_pixel = 50;
+    Point3D pixel00_loc;
+    /* Number of rays sampled per pixel, 100 by default */
+    size_t samples_per_pixel = 100;
     /* Maximum number of light ray bounces into the scene, 10 by default */
     size_t max_depth = 10;
     /* Vertical and horizontal FOV (Field of View) of the camera, stored in radians.
@@ -135,8 +139,10 @@ class Camera {
         return camera.origin + vec.x * defocus_disk_x + vec.y * defocus_disk_y;
     }
 
-    /* Returns a ray originating from the defocus disk centered at `camera.origin`, and through
+    /*
+    @brief Returns a ray originating from the defocus disk centered at `camera.origin`, and through
     a random point in the square region centered at the pixel in row `row` and column `col`.
+    
     Note that the region is square because it is a rectangle with width |`pixel_delta_x`| and
     height |`pixel_delta_y`|, and we have `pixel_delta_x` = `x_vec` / `image_w` =
     `viewport_w` / `image_w`, and `pixel_delta_y` = `y_vec` / `image_h` = `viewport_h` / `image_h`.
@@ -144,7 +150,9 @@ class Camera {
     = `image_w` / `image_h` (as the aspect ratio of the viewport is equal to the aspect ratio of
     the image).
     
-    Then why do we need both `pixel_delta_x` and `pixel_delta_y`? I think it's for clarity. */
+    Then why do we need both `pixel_delta_x` and `pixel_delta_y`? I think it's for clarity, or,
+    perhaps, due to possible floating-point errors that cause slight differences in `pixel_delta_x`
+    and `pixel_delta_y`. */
     auto random_ray_through_pixel(size_t row, size_t col) const {
 
         /* The ray originates from a random point in the camera's defocus disk */
@@ -188,9 +196,9 @@ class Camera {
             return RGB::zero();
         } else {
             /* If this ray doesn't intersect any object in the scene, then its color is determined
-            by the background. Here, the background is a blue-to-white gradient depending on the ray's
-            y-coordinate; bluer for lesser y-coordinates and whiter for larger y-coordinates (so bluer
-            at the top and whiter at the bottom). */
+            by the background. Here, the background is a blue-to-white gradient depending on the
+            ray's y-coordinate; bluer for lesser y-coordinates and whiter for larger y-coordinates
+            (so bluer at the top and whiter at the bottom). */
             return lerp(RGB::from_mag(1, 1, 1), RGB::from_mag(0.5, 0.7, 1),
                         0.5 * ray.dir.unit_vector().y + 0.5);
         }
@@ -200,7 +208,7 @@ public:
 
     /* Renders the Scene `world` to an `Image` and returns that image.
     Will render in parallel (using OpenMP for now) if available. */
-    Image render(const Scene &world) {
+    auto render(const Scene &world) {
         init();
 
         /* Calculate and store the color of each pixel */

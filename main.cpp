@@ -3,6 +3,7 @@
 #include "scene.h"
 #include "material.h"
 #include "camera.h"
+#include "bvh_node.h"
 
 int main()
 {
@@ -53,6 +54,10 @@ int main()
     auto material3 = std::make_shared<Metal>(RGB::from_mag(0.7, 0.6, 0.5), 0.0);
     world.add(std::make_shared<Sphere>(Point3D(4, 1, 0), 1.0, material3));
 
+    /* Create a Bounding Volume Hierarchy over `world` and use that to achieve faster ray-scene
+    intersection tests; after this line, `world` contains a single `BVHNode`. */
+    world = Scene({std::make_shared<BVHNode>(world)});
+
     /* Render image */
     Camera().set_image_by_width_and_aspect_ratio(1200, 16. / 9.)
             .set_vertical_fov(20)  /* Smaller vertical FOV zooms in, also avoids shape stretching */
@@ -62,7 +67,7 @@ int main()
             .set_defocus_angle(0.6)
             .set_focus_distance(10)
             .set_samples_per_pixel(500)  /* For a high-quality image */
-            .set_max_depth(20)  /* More light bounces for higher quality */
+            .set_max_depth(50)  /* More light bounces for higher quality */
             .render(world)
             .send_as_ppm("rtweekend_final_image.ppm");
 

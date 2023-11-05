@@ -46,13 +46,14 @@ class ProgressBar {
 
 public:
 
-    /* Increments the number of iterations done, and updates the progrss bar as well
-    as the estimated time left. Thread-safe. */
+    /* Increments the number of iterations done, and, if the next percent towards finishing has been
+    achieved, also updates the progress bar and the estimated time left. Thread-safe. */
     void update() {
         std::lock_guard guard(mtx);  /* Ensure only one thread can execute `update()` at a time */
 
         ++iter_done;
 
+        /* Check if the next percent towards finishing has been achieved */
         auto curr = static_cast<double>(iter_done) / static_cast<double>(total_iter);
         auto curr_percent = static_cast<unsigned>(100 * curr);
 

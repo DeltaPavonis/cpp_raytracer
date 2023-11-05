@@ -49,7 +49,9 @@ public:
     }
 
     /* Creates a RGB color with red, green, and blue components set to 0 */
-    static RGB zero() {return from_mag(0);}
+    static RGB zero() {
+        return from_mag(0);
+    }
 
     /* Creates a RGB with random red, green, and blue components, each a real number
     in the range [`min`, `max`] (by default [0, 1]). */
@@ -59,9 +61,13 @@ public:
 
     /* Mathematical operators (since anti-aliasing requires finding the average of
     multiple colors, so we need += and /=) */
+
+    /* Element-wise addition assignment operator for `RGB`s */
     auto& operator+= (const RGB &rhs) {r += rhs.r; g += rhs.g; b += rhs.b; return *this;}
+    /* Element-wise multiplication assignment operator for `RGB`s */
     auto& operator*= (double d) {r *= d; g *= d; b *= d; return *this;}
-    auto& operator/= (double d) {r /= d; g /= d; b /= d; return *this;}
+    /* Element-wise division assignment operator for `RGB`s */
+    auto& operator/= (double d) {return *this *= (1 / d);}  /* Multiply by 1/d for less divisions */
 
     /* 
     @brief Returns this `RGB` object gamma-encoded, and as a string.
@@ -89,8 +95,14 @@ public:
 };
 
 /* Mathematical utility functions */
+
+/* Element-wise multiplication by a double `d` */
 auto operator* (const RGB &a, double d) {auto ret = a; ret *= d; return ret;}
+
+/* Element-wise multiplication by a double `d` */
 auto operator* (double d, const RGB &a) {return a * d;}
+
+/* Element-wise multiplication of two `RGB` objects */
 auto operator* (const RGB &a, const RGB &b) {return RGB::from_mag(a.r * b.r, a.g * b.g, a.b * b.b);}
 
 /* Returns a color linearly interpolated, with a proportion of `1 - d` of `a` and

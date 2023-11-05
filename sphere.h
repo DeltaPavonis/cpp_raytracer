@@ -81,6 +81,12 @@ struct Sphere : public Hittable {
         return hit_info(root, hit_point, outward_unit_normal, ray, material);
     }
 
+    /* Returns the AABB (Axis-Aligned Bounding Box) for this `Sphere`. */
+    AABB get_aabb() const override {
+        auto radius_vector = Vec3D{radius, radius, radius};
+        return AABB::from_extrema(center - radius_vector, center + radius_vector);
+    }
+
     /* Print this `Sphere` to the `std::ostream` `os`. */
     void print_to(std::ostream &os) const override {
         /* Desmos format is "sphere((x, y, z), radius)" */
