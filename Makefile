@@ -73,4 +73,4 @@ endif
 # Need to pass CXXFLAGS to the above because otherwise -fopenmp errors start showing up
 
 clean:
-	$(RM) $(OBJ) $(DEP) $(RELEASE) $(DEBUG) *~ *.out *.dbg *.rel compile_commands.json *.d
+	$(RM) $(OBJ) $(DEP) $(RELEASE) $(DEBUG) *~ *.out *.dbg *.rel *.dbg.o *.rel.o compile_commands.json *.d
