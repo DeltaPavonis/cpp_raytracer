@@ -238,7 +238,10 @@ public:
         auto img = Image::with_dimensions(image_w, image_h);
         ProgressBar pb(image_h, "Rendering and storing image");
         
-        #pragma omp parallel for
+        /* Now use dynamic thread scheduling instead of static thread scheduling, with a block size
+        of the maximum of `image_h` / 1024 and 1. */
+        const size_t thread_chunk_size = std::max(image_h >> 10, size_t{1});
+        #pragma omp parallel for schedule(dynamic, thread_chunk_size)
         for (size_t row = 0; row < image_h; ++row) {
             for (size_t col = 0; col < image_w; ++col) {
 
