@@ -120,7 +120,7 @@ public:
     and "fuzz factor" `fuzz`. A fuzz factor of 0 indicates perfect specular reflection,
     and the maximum fuzz factor is 1.  */
     Metal(const RGB &intrinsic_color_, double fuzz = 0) : intrinsic_color{intrinsic_color_},
-                                                          fuzz_factor{std::min(fuzz, 1.)} {}
+                                                          fuzz_factor{std::fmin(fuzz, 1.)} {}
 };
 
 class Dielectric : public Material {

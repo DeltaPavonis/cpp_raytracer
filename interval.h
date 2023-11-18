@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <limits>
+#include <numeric>
 
 static_assert(std::numeric_limits<double>::has_infinity, "`double` needs to have "
 "positive infinity");
@@ -18,6 +19,13 @@ struct Interval {
     /* `min`/`max` = Minimum/maximum values in the interval, respectively */
     double min, max;
 
+    /* Returns the midpoint of this `Interval`; that is, `(min + max) / 2`. */
+    auto midpoint() const {return std::midpoint(min, max);}
+    /* Returns the size of this `Interval`; that is, `max - min`. */
+    auto size() const {return max - min;}
+    /* Returns `true` if this `Interval` is empty (that is, if `max - min <= 0`). */
+    bool is_empty() const {return size() <= 0;}
+
     /* Returns `true` if `d` is in the INCLUSIVE range [min, max]. */
     bool contains_inclusive(double d) const {return min <= d && d <= max;}
     /* Returns `true` if `d` is in the EXCLUSIVE range (min, max). */
@@ -26,9 +34,15 @@ struct Interval {
     auto clamp(double d) const {return (d <= min ? min : (d >= max ? max : d));}
 
     /* Updates (possibly expands) this `Interval` to also contain the `Interval` `other`. */
-    void combine_with(const Interval &other) {
+    void merge_with(const Interval &other) {
         min = std::fmin(min, other.min);
         max = std::fmax(max, other.max);
+    }
+
+    /* Updates (possibly expands) this `Interval` to contain `d`. */
+    void merge_with(double d) {
+        min = std::fmin(min, d);
+        max = std::fmax(max, d);
     }
 
     /* --- CONSTRUCTORS --- */
@@ -56,9 +70,9 @@ struct Interval {
     static auto universe() {return Interval(-DOUBLE_INF, DOUBLE_INF);}
 
     /* Returns the minimum-size interval that fully contains both of the intervals `a` and `b`;
-    that is, returns the interval that would result if `a` and `b` were to be combined into a single
+    that is, returns the interval that would result if `a` and `b` were to be merged into a single
     interval. Thus, this returns the interval from `min(a.min, b.min)` to `max(a.max, b.max)`. */
-    static auto combine(const Interval &a, const Interval &b) {
+    static auto merge(const Interval &a, const Interval &b) {
         return Interval(std::fmin(a.min, b.min), std::fmax(a.max, b.max));
     }
 };

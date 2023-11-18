@@ -87,7 +87,7 @@ struct Sphere : public Hittable {
         return AABB::from_extrema(center - radius_vector, center + radius_vector);
     }
 
-    /* Print this `Sphere` to the `std::ostream` `os`. */
+    /* Prints this `Sphere` to the `std::ostream` specified by `os`. */
     void print_to(std::ostream &os) const override {
         /* Desmos format is "sphere((x, y, z), radius)" */
         os << "Sphere { center: " << center << ", radius: " << radius << ", material: " << *material

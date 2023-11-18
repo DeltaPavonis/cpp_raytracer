@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <memory>
+#include <span>
 #include "hittable.h"
 
 class Scene : public Hittable {
@@ -30,7 +31,7 @@ public:
         /* Use `std::move` when inserting the `std::shared_ptr` into the `std::vector`
         of `Hittable`s. Passing the `std::shared_ptr<Hittable>` by copy and then
         moving it follows R34 of the C++ Core Guidelines (see https://tinyurl.com/bdfjfrub). */
-        aabb.combine_with(object->get_aabb());  /* This must happen BEFORE `object` is moved! */
+        aabb.merge_with(object->get_aabb());  /* This must happen BEFORE `object` is moved! */
         objects.push_back(std::move(object));
     }
 
@@ -54,7 +55,7 @@ public:
     }
 
     /* Returns the AABB (Axis-Aligned Bounding Box) for this `Scene`. */
-    AABB get_aabb() const {
+    AABB get_aabb() const override {
         return aabb;
     }
 
@@ -70,8 +71,12 @@ public:
 
     Scene() = default;
 
-    /* Constructs a `Scene` with objects given in `objects_` */
-    Scene(const std::vector<std::shared_ptr<Hittable>> &objects_) : objects{objects_} {}
+    /* Constructs a `Scene` with objects given in `objs` */
+    Scene(std::span<const std::shared_ptr<Hittable>> objs) {
+        for (const auto &i : objs) {
+            add(i);
+        }
+    }
 };
 
 #endif

@@ -18,7 +18,21 @@ public:
 
     /* Returns the `Interval` corresponding to the axis specified by `axis`. Specifically,
     returns the x-, y-, and z- interval when `axis` is 0, 1, or 2, respectively. */
-    const auto& get_axis(size_t axis) const {return (axis == 0 ? x : (axis == 1 ? y : z));}
+    auto& operator[] (size_t axis) {return (axis == 0 ? x : (axis == 1 ? y : z));}
+    /* Returns the `Interval` corresponding to the axis specified by `axis`. Specifically,
+    returns the x-, y-, and z- interval when `axis` is 0, 1, or 2, respectively. */
+    const auto& operator[] (size_t axis) const {return (axis == 0 ? x : (axis == 1 ? y : z));}
+
+    /* Returns the centroid of this `AABB`. */
+    auto centroid() const {return Point3D{x.midpoint(), y.midpoint(), z.midpoint()};}
+    /* Returns the surface area of this `AABB`. */
+    auto surface_area() const {
+        return 2 * (x.size() * x.size() + y.size() * y.size() + z.size() * z.size());
+    }
+    /* Returns the volume of this `AABB`. */
+    auto volume() const {
+        return x.size() * y.size() * z.size();
+    }
 
     /* Returns `true` if the ray `ray` intersects this `AABB` in the time range specified by
     `ray_times`. */
@@ -64,7 +78,7 @@ public:
         if (inverse_ray_dir < 0) {std::swap(t0, t1);}
         /* Update `ray_times` to equal its intersection with (t0, t1). This is a concise way of
         finding the intersection of the time intervals we currently have calculated with the
-        original desried time interval `ray_times`. Note that the reason we pass `ray_times` by
+        original desired time interval `ray_times`. Note that the reason we pass `ray_times` by
         copy is because we modify `ray_times` when finding its intersection with the time intervals
         we compute fo each coordinate. */
         if (t0 > ray_times.min) {ray_times.min = t0;}
@@ -111,11 +125,18 @@ public:
     }
 
     /* Updates (possibly expands) this `AABB` to also bound the `AABB` `other`. */
-    void combine_with(const AABB &other) {
+    void merge_with(const AABB &other) {
         /* Just combine the x-, y-, and z- intervals with those from `other` */
-        x.combine_with(other.x);
-        y.combine_with(other.y);
-        z.combine_with(other.z);
+        x.merge_with(other.x);
+        y.merge_with(other.y);
+        z.merge_with(other.z);
+    }
+
+    /* Updates (possibly expands) this `AABB` to also bound the `Point3D` `p`. */
+    void merge_with(const Point3D &p) {
+        x.merge_with(p.x);
+        y.merge_with(p.y);
+        z.merge_with(p.z);
     }
 
     /* Overload `operator<<` to allow printing `AABB`s to output streams */
@@ -155,9 +176,9 @@ public:
     /* Returns the minimum-volume `AABB` that contains both of the `AABB`s `a` and `b`.
     That is, this returns the `AABB` that would result if `a` and `b` were combined into a single
     `AABB`. */
-    static AABB combine(const AABB &a, const AABB &b) {
-        return AABB(Interval::combine(a.x, b.x), Interval::combine(a.y, b.y),
-                    Interval::combine(a.z, b.z));
+    static AABB merge(const AABB &a, const AABB &b) {
+        return AABB(Interval::merge(a.x, b.x), Interval::merge(a.y, b.y),
+                    Interval::merge(a.z, b.z));
     }
 };
 

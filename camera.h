@@ -4,6 +4,7 @@
 #include <numbers>
 #include "image.h"
 #include "ray3d.h"
+#include "bvh.h"
 
 /* The class `Camera` encapsulates the notion of a camera viewing a 3D scene from
 a designated camera/eye point, located a certain length (called the focal length)
@@ -196,7 +197,7 @@ class Camera {
 
     /* Computes and returns the color of the light ray `ray` shot into the scene `world`.
     If `ray` has bounced more than `depth_left` times, returns `RGB::zero()`. */
-    auto ray_color(const Ray3D &ray, size_t depth_left, const Scene &world) {
+    auto ray_color(const Ray3D &ray, size_t depth_left, const Hittable &world) {
 
         /* If the ray has bounced the maximum number of times, then no light is collected
         from it. Thus, we return the RGB color (r: 0, g: 0, b: 0). */
@@ -231,12 +232,12 @@ public:
 
     /* Renders the Scene `world` to an `Image` and returns that image.
     Will render in parallel (using OpenMP for now) if available. */
-    auto render(const Scene &world) {
+    auto render(const Hittable &world) {
         init();
 
         /* Calculate and store the color of each pixel */
         auto img = Image::with_dimensions(image_w, image_h);
-        ProgressBar pb(image_h, "Rendering and storing image");
+        ProgressBar pb(image_h, "Rendering image");
         
         /* Now use dynamic thread scheduling instead of static thread scheduling, with a block size
         of the maximum of `image_h` / 1024 and 1. */
@@ -260,6 +261,12 @@ public:
              pb.update();
         }
         return img;
+    }
+
+    /* When rendering a `Scene`, `Camera::render()` build a `BVH` over the `Scene` and render
+    using that `BVH` to improve performance. */
+    auto render(const Scene &world) {
+        return render(BVH(world));
     }
 
     /* Setters. Each returns a mutable reference to this object to create a functional interface */
@@ -288,7 +295,7 @@ public:
         camera.dir = p - camera.origin;
         return *this;
     }
-    /* Set the camera direction to always be towards the point `p`, no matter what the camera
+    /* Set the camera direction to always be towards the point `p`, no matter where the camera
     center is. */
     auto& set_camera_lookat(const Point3D &p) {camera_lookat = p; return *this;}
     /* Set the focus distance (the distance from the camera center to the plane of perfect
@@ -356,6 +363,42 @@ public:
         vertical_fov.reset();
         return *this;
     }
+
+    /* Prints this `Camera` to the `std::ostream` specified by `os`. */
+    void print_to(std::ostream &os) {
+        init();  /* Calculate all members before printing them */
+        os << "Camera {\n"
+           << "\tImage dimensions: " << image_w << " x " << image_h << '\n'
+           << "\tViewport dimensions: " << viewport_w << " x " << viewport_h << '\n'
+           << "\tpixel_delta_x: " << pixel_delta_x << '\n'
+           << "\tpixel_delta_y: " << pixel_delta_y << '\n'
+           << "\tCamera center: " << camera.origin << '\n'
+           << "\tCamera direction: " << camera.dir << '\n'
+           << "\tUp direction: " << view_up_dir << '\n'
+           << "\tCamera orientation x-, y-, and z- orthonormal basis vectors {"
+           << "\n\t\tx: " << cam_basis_x
+           << "\n\t\ty: " << cam_basis_y
+           << "\n\t\tz: " << cam_basis_z << "\n\t}\n"
+           << "\tFocus distance: " << *focus_dist << '\n'
+           << "\tDefocus angle: " << defocus_angle << " rad, "
+           << defocus_angle * 180 / std::numbers::pi << " degrees\n"
+           << "\tDefocus dist x-, y- orthonormal basis vectors {"
+           << "\n\t\tx: " << defocus_disk_x
+           << "\n\t\ty: "<< defocus_disk_y << "\n\t}\n"
+           << "\tViewport top-left corner location: " << pixel00_loc << '\n'
+           << "\tSamples per pixel: " << samples_per_pixel << '\n'
+           << "\tMaximum bounces per ray: " << max_depth << '\n'
+           << "\tVertical FOV (-1 means not given): " << vertical_fov.value_or(-1) << " rad, "
+           << (vertical_fov ? *vertical_fov * 180 / std::numbers::pi : -1) << " degrees\n"
+           << "\tHorizontal FOV (-1 means not given): " << horizontal_fov.value_or(-1) << " rad, "
+           << (horizontal_fov ? *horizontal_fov * 180 / std::numbers::pi : -1) << " degrees\n}";
+    }
 };
+
+/* Overload `operator<<` to allow printing `Camera`s to output streams */
+std::ostream& operator<< (std::ostream &os, Camera cam) {
+    cam.print_to(os);
+    return os;
+}
 
 #endif
