@@ -97,7 +97,7 @@ public:
 /* Mathematical utility functions */
 
 /* Element-wise addition of two `RGB`s. */
-auto operator+ (const RGB &a, const RGB &b) {return RGB::from_mag(a.r + b.r, a.b + b.b, a.g + b.g);}
+auto operator+ (const RGB &a, const RGB &b) {return RGB::from_mag(a.r + b.r, a.g + b.g, a.b + b.b);}
 
 /* Element-wise multiplication by a double `d` */
 auto operator* (const RGB &a, double d) {auto ret = a; ret *= d; return ret;}
