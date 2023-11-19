@@ -21,8 +21,8 @@ class BVH : public Hittable {
     };
 
     struct BVHNode : public Hittable {
-        /* `aabb` = The AABB (Axis-Aligned Bounding Box) for the set of objects represented by this
-        `BVHNode`. */
+        /* `aabb` = The AABB (Axis-Aligned Bounding Box) for the set of objects represented by
+        this `BVHNode`. */
         AABB aabb;
 
         /* `left`/`right` = the left and right children, respectively, of this `BVHNode` within
@@ -40,10 +40,11 @@ class BVH : public Hittable {
         std::optional<hit_info> hit_by(const Ray3D &ray, const Interval &ray_times) const override {
             
             /* Key idea behind BVH's: if the ray `ray` doesn't hit the bounding volume for a set of
-            objects (which can be checked by a single ray-AABB intersection test), then we immediately
-            know that it will not hit any of the objects inside that bounding volume. Thus, we
-            just instantly return an empty `std::optional<hit_info>` if the bounding box for the
-            current `BVHNode` is not intersected by `ray` in the time interval `ray_times`.  */
+            objects (which can be checked by a single ray-AABB intersection test), then we
+            immediately know that it will not hit any of the objects inside that bounding volume.
+            Thus, we just instantly return an empty `std::optional<hit_info>` if the bounding box
+            for the current `BVHNode` is not intersected by `ray` in the time interval `ray_times`.
+            */
             if (!aabb.is_hit_by(ray, ray_times)) {
                 return {};
             }
@@ -55,20 +56,21 @@ class BVH : public Hittable {
                 return left->hit_by(ray, ray_times);
             }
 
-            /* Otherwise, if `ray` does hit the bounding box, we need to recursively check the left and
-            right children of the current `BVHNode`, and return the `hit_info` with the smallest
+            /* Otherwise, if `ray` does hit the bounding box, we need to recursively check the left
+            and right children of the current `BVHNode`, and return the `hit_info` with the smallest
             `hit_time` resulting from the two children. */
             if (auto info_l = left->hit_by(ray, ray_times); info_l) {
-                /* If `ray` hits some object in the left child, then check if it hits any object in the
-                right child at an earlier time. If it does - that is, if `ray` hits some object in the
-                right child of this `BVHNode` in the time range (`ray_times.min`, `info_l->hit_time`) -
-                then return the `hit_info` from the right child. Otherwise, we know that the earliest
-                object hit occurs in the left child, so we return `info_l` then. */
+                /* If `ray` hits some object in the left child, then check if it hits any object in
+                the right child at an earlier time. If it does - that is, if `ray` hits some object
+                in the right child of this `BVHNode` in the time range (`ray_times.min`,
+                `info_l->hit_time`) - then return the `hit_info` from the right child. Otherwise, we
+                know that the earliest object hit occurs in the left child, so we return `info_l`
+                then. */
                 auto info_r = right->hit_by(ray, Interval(ray_times.min, info_l->hit_time));
                 return (info_r ? info_r : info_l);
             } else {
-                /* If `ray` hits no object in this BVHNode's left child, then just return the `hit_info`
-                from the right child. */
+                /* If `ray` hits no object in this BVHNode's left child, then just return the
+                `hit_info` from the right child. */
                 return right->hit_by(ray, ray_times);
             }
         }
@@ -109,16 +111,18 @@ class BVH : public Hittable {
     the `Scene`s made in `BVHNode::as_leaf_node()`, which the leaf `BVHNodes` point to. */
     size_t total_bvh_nodes = 0;
 
-    /* Used to have "free on memory that was not `malloc`ed" error. Fixed it with this change: before, `objects`
-    was a vector of `Hittable*`, and in the `start == end - 1` condition seems to be where the error begun.
-    I thought the Hittable shared_ptr constructor would work though with the raw pointer? Guess not. It's weird.
-    After I changed the `objects` parameter to just a vector of shared_ptr<Hittable>'s, it worked.
+    /* Used to have "free on memory that was not `malloc`ed" error. Fixed it with this change:
+    before, `objects` was a vector of `Hittable*`, and in the `start == end - 1` condition seems
+    to be where the error begun. I thought the Hittable shared_ptr constructor would work though
+    with the raw pointer? Guess not. It's weird. After I changed the `objects` parameter to just
+    a vector of shared_ptr<Hittable>'s, it worked.
     
-    We learned why the error occurred. It's because when we construct a std::shared_ptr from a raw memory address,
-    it creates a new reference counter, because a new shared_ptr doesn't know that there is a previously-existing
-    reference counter to the same location. So, what will happen is a double-free error; when one of the reference counts
-    drops to 0, it calls the destructor on the memory, and when the second reference counter drops to 0, it tries to destroy
-    the object again, leading to the double-free error. */
+    We learned why the error occurred. It's because when we construct a std::shared_ptr from a raw
+    memory address, it creates a new reference counter, because a new shared_ptr doesn't know that
+    there is a previously-existing reference counter to the same location. So, what will happen is a
+    double-free error; when one of the reference counts drops to 0, it calls the destructor on the
+    memory, and when the second reference counter drops to 0, it tries to destroy the object again,
+    leading to the double-free error. */
     auto build(std::span<std::shared_ptr<Hittable>> objects) {
         ++total_bvh_nodes;
 
@@ -221,10 +225,10 @@ class BVH : public Hittable {
             Now, for each bucket, compute the above cost that results from splitting the current
             set of objects into all objects after this bucket, and all other objects. That
             is, for bucket i, we have A = set of all objects in buckets 0..i, and B = set of
-            all objects in buckets i + 1..NUM_BUCKETS - 1. Thus, `costs[i]` = the cost resulting from
-            splitting after bucket `i`. Note that we don't consider splitting after the very last
-            bucket because that wouldn't be splitting anything at all. We then choose the bucket
-            with the minimum cost. */
+            all objects in buckets i + 1..NUM_BUCKETS - 1. Thus, `costs[i]` = the cost resulting
+            from splitting after bucket `i`. Note that we don't consider splitting after the very
+            last bucket because that wouldn't be splitting anything at all. We then choose the
+            bucket with the minimum cost. */
             std::vector<double> costs(NUM_BUCKETS - 1);
 
             /* Compute the (surface area of AABB of A) * (number of objects in A) term for all

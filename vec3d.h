@@ -42,7 +42,7 @@ struct Vec3D {
 
     Vec3D unit_vector() const;
 
-    /* Returns `true` if all three components have magnitude strictly less than `epsilon` */
+    /* Returns `true` if all three components have magnitude strictly less than `epsilon`. */
     auto near_zero(double epsilon = 1e-8) {
         return (std::fabs(x) < epsilon) && (std::fabs(y) < epsilon) && (std::fabs(z) < epsilon);
     }
@@ -137,16 +137,20 @@ auto Vec3D::random_unit_vector_on_hemisphere(const Vec3D &surface_normal) {
     return (dot(surface_normal, result) > 0 ? result : -result);
 }
 
-/* Returns the vector that is the vector `v` reflected across the unit normal vector
-`unit_normal`. */
-auto reflected(const Vec3D &v, const Vec3D &unit_normal) {
-    /* Let the endpoint of `v` coincide with the origin of `unit_normal`. Then observe
-    that the reflected vector is equivalent to `2*v - 2*b`, where `b` is the vector
-    parallel to `unit_normal` with magnitude `|v|cos(theta)`, where `theta` is the angle
-    between `v` and `unit_normal`. Now, observe that `|v|cos(theta)` = `|v||n|cos(theta)`
-    since `n` is a unit vector, and so `b` = `unit_normal * dot(v, unit_normal)` by the
-    definition of the dot product. `2*v - 2*b` is thus calculated as follows: */
-    return v - 2 * dot(v, unit_normal) * unit_normal;
+/* Returns the resulting direction when the direction vector `dir` is reflected across the unit
+normal vector `unit_normal`, where the endpoint of `dir` is assumed to coincide with the origin
+of `unit_normal`. The returned direction vector will thus have the same magnitude as `dir`. */
+auto reflected(const Vec3D &dir, const Vec3D &unit_normal) {
+    /* Observe that the reflected direction is equivalent to `dir + 2*b`, where `b` is the
+    vector parallel to `unit_normal` with magnitude `|dir|cos(theta)` (where `theta` is
+    the angle made between the incoming vector and `unit_normal`). Now, observe that
+    `|dir|cos(theta) = |dir||unit_normal|cos(theta)` since `|unit_normal| = 1`. Finally,
+    observe that `theta` is the supplementary angle of the actual angle `x` between
+    `dir` and `unit_normal`, and so `cos(theta) = -cos(x)`. Thus, `b` is the vector
+    parallel to `unit_normal` with magnitude `|dir||unit_normal|cos(theta)
+    = -|dir||unit_normal|cos(x) = -dot(dir, unit_normal)`, and so the reflected direction
+    (which is `dir - 2 * b`) is calculated as follows: */
+    return dir - 2 * dot(dir, unit_normal) * unit_normal;
 }
 
 /*

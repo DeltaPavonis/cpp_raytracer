@@ -209,22 +209,43 @@ class Camera {
         ray collisions that happen at very small times. */
         if (auto info = world.hit_by(ray, Interval::with_min(0.00001)); info) {
 
+            /* `emitted_color` = the color of light rays emitted from the current hit
+            object's material. If the current object does not emit any light, then
+            `info->material->emit()` and thus `emitted_color` will just equal `RGB::zero()`. */
+            auto emitted_color = info->material->emit(); 
+
             /* If this ray hits an object in the scene, compute the scattered ray and the
-            color attenuation, and return attenuation * ray_color(scattered ray).*/
+            color attenuation. The resulting color of this ray is then equal to
+            attenuation * ray_color(scattered ray). Finally, we add this to `emitted_color`
+            (which, again, is the color contributed from the current hit material's light
+            emission), and return their sum. */
             if (auto scattered = info->material->scatter(ray, *info); scattered) {
-                return scattered->attenuation * ray_color(scattered->ray, depth_left - 1, world);
+                /* Return the sum of the color contributed from the current object's material's
+                light emission, and the color contributed from the scattered ray's bounces off
+                objects in the scene. */
+                return emitted_color
+                     + scattered->attenuation * ray_color(scattered->ray, depth_left - 1, world);
+            } else {
+                /* If the material intersected did not produce a new ray from light scattering
+                (if it absorbed the ray, or if the ray was determined to have originated from that
+                object (and so no further tracing of this ray's path back in time is needed)), then
+                just return the color contribution from the object itself; that is, we just return
+                the color of light rays emitted from the current object's material. */
+                return emitted_color;
             }
-            
-            /* If the ray is not scattered (because it is absorbed, maybe? TODO: elaborate)
-            then no light is gathered. */
-            return RGB::zero();
         } else {
+            /* To show off the lights, we just make the background completely black (so
+            we always return `RGB::zero()` when a ray flies into the background). As a result,
+            all light in the resulting render comes from an actual light source, and not just
+            from the background. */
+            return RGB::zero();
+
             /* If this ray doesn't intersect any object in the scene, then its color is determined
             by the background. Here, the background is a blue-to-white gradient depending on the
             ray's y-coordinate; bluer for lesser y-coordinates and whiter for larger y-coordinates
             (so bluer at the top and whiter at the bottom). */
-            return lerp(RGB::from_mag(1, 1, 1), RGB::from_mag(0.5, 0.7, 1),
-                        0.5 * ray.dir.unit_vector().y + 0.5);
+            // return lerp(RGB::from_mag(1, 1, 1), RGB::from_mag(0.5, 0.7, 1),
+                        // 0.5 * ray.dir.unit_vector().y + 0.5);
         }
     }
 
@@ -263,8 +284,8 @@ public:
         return img;
     }
 
-    /* When rendering a `Scene`, `Camera::render()` build a `BVH` over the `Scene` and render
-    using that `BVH` to improve performance. */
+    /* When rendering a `Scene`, `Camera::render()` will automatically build a `BVH` over
+    the `Scene` and render using that `BVH` to improve performance. */
     auto render(const Scene &world) {
         return render(BVH(world));
     }

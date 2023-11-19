@@ -7,6 +7,9 @@
 #include "hittable.h"
 #include "rand_util.h"
 
+/* `scatter_info` stores information about scattered rays; specifically, it stores the
+origin and direction of the scattered ray, as well as the color attenuation resulting from
+the material that the ray previously hit. */
 struct scatter_info {
 
     /* `ray` = the scattered ray */
@@ -27,6 +30,16 @@ struct Material {
     is returned. */
     virtual std::optional<scatter_info> scatter(const Ray3D &ray, const hit_info &info) const = 0;
 
+    /* For emitters, `emit()` returns the color of light rays emitted from that emitter.
+    
+    We choose to NOT make `emit` a pure virtual function, to prevent from having to implement `emit`
+    in every single class inheriting from `Material`. Instead, we provide a default for non-emitting
+    materials: by default, `emit()` will just return `RGB::zero()`, representing no light being
+    emitted from the material. */
+    virtual RGB emit() const {
+        return RGB::zero();
+    }
+
     /* Prints this `Material` object to the `std::ostream` specified by `os`. */
     virtual void print_to(std::ostream &os) const = 0;
 
@@ -39,6 +52,10 @@ std::ostream& operator<< (std::ostream &os, const Material &mat) {
     return os;
 }
 
+/* The `Lambertian` type encapsulates the notion of Lambertian reflectors (also called
+diffuse reflectors or matte surfaces). The defining property of Lambertian reflectors
+are that they obey the Lambertian Cosine Law, and so have the same luminance when
+viewed from any angle. */
 class Lambertian : public Material {
     /* `intrinsic_color` = The color intrinsic to this Lambertian reflector */
     RGB intrinsic_color;
@@ -78,9 +95,21 @@ public:
     Lambertian(const RGB &intrinsic_color_) : intrinsic_color{intrinsic_color_} {}
 };
 
+/* The `Metal` type encapsulates the notion of a metallic material; a material that displays
+generally-specular reflection as opposed to Lambertian reflection due to its physical and
+electronic properties.
+
+The reason why metals tend to reflect light rather than absorbing or transmitting it is because
+metals tend to contain high numbers of free electrons. This means that when a photon hits the
+surface of a metal, it is relatively more likely that a free electron will be there to absorb
+and re-emit (reflect) the photon. As a result, metals tend to be light reflectors. */
 class Metal : public Material {
     /* `intrinsic_color` = The color intrinsic to this metal */
     RGB intrinsic_color;
+    /* `fuzz_factor` represents how much "fuzz" there is in this metal's reflection;
+    a fuzz factor of 0 represents perfect specular reflection, and a fuzz factor of 1
+    represents Lambertian reflection (and those are the lowest and highest allowed
+    fuzz factors, respectively). */
     double fuzz_factor;
 
 public:
@@ -117,12 +146,22 @@ public:
     }
 
     /* Constructs a metal (specular) reflector with intrinsic color `intrinsic_color_`
-    and "fuzz factor" `fuzz`. A fuzz factor of 0 indicates perfect specular reflection,
-    and the maximum fuzz factor is 1.  */
+    and "fuzz factor" `fuzz`. A fuzz factor of 0 indicates perfect specular reflection
+    (like a mirror), and the maximum fuzz factor is 1 (indicating diffuse reflection).  */
     Metal(const RGB &intrinsic_color_, double fuzz = 0) : intrinsic_color{intrinsic_color_},
                                                           fuzz_factor{std::fmin(fuzz, 1.)} {}
 };
 
+/* The `Dielectric` type encapsulates the notion of dielectric (nonconducting) materials,
+such as glass. Unlike metallic materials, dielectric materials tend to absorb or transmit
+incoming photons instead of reflecting them.
+
+The reason why dielectric materials tend to absorb or transmit photons rather than
+reflecting photons is because dielectric materials, by definition, have NO FREE ELECTRONS.
+As a result, when a photon hits the surface of a dielectric material, there will be no
+free electrons to absorb and re-emit (reflect) the photon, resulting in reflection
+happening only in a few specific circumstances (as described by Snell's Law and the
+Fresnel Equations; we use Snell's Law in our implementation of dielectrics). */
 class Dielectric : public Material {
 
     /* `refr_index` = The refractive index of this dielectric surface */
@@ -173,7 +212,7 @@ public:
 
         /* Attenuance is just (1, 1, 1); color is not lost when moving through (or reflecting
         off of) a Dielectric material apparently. The tutorial says "Attenuation is always 1"
-        because a glass surface absorbs nothing. Makes sense, but does this hold for ALL
+        because "glass surface[s] absorb nothing". Makes sense, but does this hold for ALL
         dielectric surfaces? Maybe for tinted glass it doesn't, but our current implementation
         of Dielectric doesn't have a field for intrinsic color or tint. */
         return scatter_info(Ray3D(info.hit_point, *dir), RGB::from_mag(1, 1, 1));
@@ -186,6 +225,54 @@ public:
 
     /* Constructs a dielectric reflector with refractive index `refractive_index`. */
     Dielectric(double refractive_index) : refr_index{refractive_index} {}
+};
+
+/* The `DiffuseLight` type encapsulates the notion of a diffuse (uniform) light: a light that
+emits photons uniformly in all directions. */
+class DiffuseLight : public Material {
+
+    /* `intrinsic_color` = The color of the photons emitted by this `Light`. In the eye
+    tracing model, this (well, technically it is multiplied by `intensity` first) is the
+    color taken on by rays when their paths, traced backward in time, lead to this
+    `DiffuseLight`. */
+    RGB intrinsic_color;
+    /* `intensity` = The relative linear intensity of the light source. In real life, this
+    represents the number of photons emitted from the light sources per unit time. In this
+    raytracer, it represents the "strength" of the light; rays that originate from the light
+    source have color set to `intensity * intrinsic_color`. Thus, higher values for `intensity`
+    result in this `DiffuseLight` having a larger effect on the objects surrounding it in the
+    scene. */
+    double intensity;
+
+public:
+
+    std::optional<scatter_info> scatter(const Ray3D &ray, const hit_info &info) const override {
+        /* `DiffuseLights` never scatter light rays; that is, if the ray `ray` is found to have
+        previously intersected with a diffuse light, then we will assume that it was in fact
+        *emitted* by that diffuse light (we assume that it originated from that diffuse light).
+        As a result, when a ray hits a diffuse light, we have finished tracing its path back in
+        time, because if a ray hits a diffuse light, we assume that that's where its path begun.
+        Thus, `DiffuseLight::scatter` always returns an empty `std::optional<hit_info>`. */
+        return {};
+    }
+
+    /* Return the color of light rays emitted from this `DiffuseLight`; as explained above, this
+    is always `intensity * intrinsic_color` (because a diffuse light, by definition, emits light
+    uniformly in all directions). */
+    RGB emit() const override {
+        return intensity * intrinsic_color;
+    }
+
+    /* Prints this `DiffuseLight` material to the `std::ostream` specified by `os`. */
+    void print_to(std::ostream &os) const override {
+        os << "DiffuseLight {color: " << intrinsic_color.as_string(", ", "()") << ", intensity: "
+           << intensity << "} " << std::flush;
+    }
+
+    /* Constructs a diffuse light with intrinsic color `intrinsic_color_` and relative intensity
+    `intensity_`. */
+    DiffuseLight(const RGB &intrinsic_color_, double intensity_)
+        : intrinsic_color{intrinsic_color_}, intensity{intensity_} {}
 };
 
 #endif

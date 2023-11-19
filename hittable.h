@@ -14,6 +14,9 @@
 "material.h" and "hittable.h" on each other */
 class Material;
 
+/* `hit_info` stores information about a given ray-object intersection, including
+its hit time, hit point, unit surface normal, front vs back face detection, as
+well as the material of the object hit. */
 struct hit_info {
 
     /* `hit_time` = The time where the ray intersects an object */
@@ -79,7 +82,7 @@ struct Hittable {
     /* Returns the AABB (Axis-Aligned Bounding Box) for this `Hittable` object */
     virtual AABB get_aabb() const = 0;
 
-    /* Prints this `Hittable` object */
+    /* Prints this `Hittable` object to the `std::ostream` specified by `os`. */
     virtual void print_to(std::ostream &os) const = 0;
 
     virtual ~Hittable() = default;
