@@ -65,6 +65,8 @@
         "sstream": "cpp",
         "optional": "cpp",
         "condition_variable": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "span": "cpp",
+        "set": "cpp"
     }
 }

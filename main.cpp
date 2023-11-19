@@ -69,7 +69,7 @@ int main()
     );
     world.add(std::make_shared<Sphere>(Point3D(0, 2.5, 2.5), 0.2, light_material));
 
-    /* Render image */
+    /* Render image (2 hours 37 minutes) */
     Camera().set_image_by_width_and_aspect_ratio(3840, 16. / 9.)
             .set_vertical_fov(25)  /* Smaller vertical FOV zooms in, also avoids shape stretching */
             .set_camera_center(Point3D{13, 2, 3})
@@ -80,7 +80,7 @@ int main()
             .set_samples_per_pixel(25000)  /* For a high-quality image */
             .set_max_depth(20)  /* More light bounces for higher quality */
             .render(world)
-            .send_as_ppm("rtow_final_lights_without_tone_mapping.ppm");
+            .send_as_ppm("rtow_final_lights_with_tone_mapping.ppm");
 
     return 0;
 }

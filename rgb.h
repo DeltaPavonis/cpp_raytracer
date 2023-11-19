@@ -22,6 +22,12 @@ public:
     /* Real-valued red, green, and blue components, each ranging from 0.0 to 1.0
     (if representing a valid color). */
     double r, g, b;
+
+    /* Returns the luminance of this `RGB` color. This is a very well-known formula in
+    computer graphics (see https://tinyurl.com/3rku9fy4). */
+    auto luminance() const {
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
     
     /* --- NAMED CONSTRUCTORS --- */
 
@@ -82,14 +88,27 @@ public:
     the RGB intensities are desired, set `gamma` to 1.
     */
     auto as_string(std::string delimiter = " ", std::string surrounding = "",
-                   double max_magnitude = 255, double gamma = 2) const
+                   double max_magnitude = 255, double gamma = 2,
+                   bool use_tone_mapping = true) const
     {
+        auto r2 = r, g2 = g, b2 = b;
+
+        /* Use the Reinhard operator to perform tone mapping on the RGB components of this
+        color. The Reinhard operator works by taking the linear (not gamma-corrected) RGB
+        components, and dividing each by (1 + L), where L is the luminance of this color. */
+        if (use_tone_mapping) {
+            auto L = luminance();
+            r2 /= 1 + L;
+            g2 /= 1 + L;
+            b2 /= 1 + L;
+        }
+
         /* Add 0.999999 to `max_magnitude` to allow truncating to `max_magnitude` itself */
         auto scale = max_magnitude + 0.999999;
         return (surrounding.empty() ? "" : std::string{surrounding[0]})
-              + std::to_string(static_cast<int>(scale * linear_to_gamma(r, gamma))) + delimiter
-              + std::to_string(static_cast<int>(scale * linear_to_gamma(g, gamma))) + delimiter
-              + std::to_string(static_cast<int>(scale * linear_to_gamma(b, gamma)))
+              + std::to_string(static_cast<int>(scale * linear_to_gamma(r2, gamma))) + delimiter
+              + std::to_string(static_cast<int>(scale * linear_to_gamma(g2, gamma))) + delimiter
+              + std::to_string(static_cast<int>(scale * linear_to_gamma(b2, gamma)))
               + (surrounding.empty() ? "" : std::string{surrounding[1]});
     }
 };
