@@ -66,14 +66,14 @@ int main()
     );
     world.add(std::make_shared<Sphere>(Point3D(0, 12, 0), 3, light_material));
 
-    /* Render image; took 1:58:18 on my Dell XPS 8960 with 16 cores and 24 threads */
+    /* Render image; takes ~2 hours on my Dell XPS 8960 with 16 cores and 24 threads */
     Camera().set_image_by_width_and_aspect_ratio(3840, 16. / 9.)
             .set_vertical_fov(40)  /* Smaller FOV means more zoomed in (also avoids stretching) */
             .set_camera_center(Point3D{0, 12.5, 50})
             .set_camera_lookat(Point3D{0, 0, 0})
             .set_camera_up_direction(Vec3D{0, 1, 0})
             .set_defocus_angle(0.1)
-            .set_focus_distance(10)
+            .set_focus_distance(51)
             .set_samples_per_pixel(10000)  /* For a high-quality image */
             .set_max_depth(20)  /* More light bounces for higher quality */
             .render(world)
