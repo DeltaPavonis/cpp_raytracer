@@ -30,7 +30,7 @@ class BVH : public Hittable {
         it is a binary tree, because each `BVHNode` has at most two children.
         
         The reason why `left` and `right` are pointers to `Hittable` rather than `BVHNode` is
-        because the leaves of a Bounding Volume Hierachy are the primitives themselves. Thus,
+        because the leaves of a Bounding Volume Hierarchy are the primitives themselves. Thus,
         `BVHNode`s may need to point to general `Hittable`s as well as `BVHNode`s, and so
         `left` and `right` must be pointers to `Hittable`, not just `BVHNode`. */
         std::shared_ptr<Hittable> left, right;
@@ -87,12 +87,13 @@ class BVH : public Hittable {
 
         /* --- NAMED CONSTRUCTORS --- */
 
-        /* Returns a leaf `BVHNode` containing all the primitives in `objects`.  */
+        /* Returns a `std::shared_ptr` containing a leaf `BVHNode`, which itself contains all the
+        primitives in `objects`. */
         static auto as_leaf_node(std::span<std::shared_ptr<Hittable>> objects) {
             auto ret = std::make_shared<BVHNode>();
             /* Leaf `BVHNode`s have their `left` and `right` pointers set to the same memory
             address, so that traversing through a `BVH` tree structure never leads to `nullptr`,
-            simplifying the code. This trick is from TNW.*/
+            simplifying the code. This trick is from TNW. */
             ret->left = ret->right = std::make_shared<Scene>(objects);  /* Then, `left == right` */
             ret->aabb = ret->left->get_aabb();  /* And so ret->aabb is just left/right's AABB */
             return ret;
