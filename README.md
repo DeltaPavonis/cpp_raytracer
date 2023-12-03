@@ -5,8 +5,9 @@ A simple raytracer (pathtracer), coded in modern C++, following various tutorial
 - [_Physically Based Rendering: From Theory to Implementation_, 4th edition](https://pbr-book.org/4ed/contents)
 - [_Computer Graphics from Scratch_ by Gabriel Gambetta](https://gabrielgambetta.com/computer-graphics-from-scratch/)
 
-![image](images/rtweekend_final_image.png)
-![image](images/rtow_final_lights_with_tone_mapping.png)
-![image](images/millions_of_spheres_with_lights.png)
+Some images rendered by this raytracer:
+![image](rendered_images/rtweekend_final_image.png)
+![image](rendered_images/rtow_final_lights_with_tone_mapping.png)
+![image](rendered_images/millions_of_spheres_with_lights.png)
 
 
