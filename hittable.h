@@ -32,7 +32,7 @@ struct hit_info {
     Vec3D unit_surface_normal;
     /* `hit_from_outside` = Whether or not the ray hit the outside of the surface. */
     bool hit_from_outside = false;  /* Named `front_face` in the tutorial */
-    /* `material` points to the `Material` of the object which the ray intersected */
+    /* `material` points to the `Material` of the object which the ray intersected. */
     const Material* material;
 
     /* --- CONSTRUCTORS ---*/
@@ -75,11 +75,19 @@ std::ostream& operator<< (std::ostream &os, const hit_info &info) {
 struct Hittable {
     
     /* Check if the object is hit by a ray in the time range specified by `ray_times`.
-    = 0 causes `hit_by` to be a pure virtual function, and so `Hittable` is an abstract
-    class, which means it itself cannot be instantiated (good, it's only an interface). */
+    If the ray does hit some object, returns a `hit_info` object with details about the
+    intersection point with the smallest intersection time; if not, returns an empty
+    `std::optional<hit_info>`.
+
+    The = 0 causes `hit_by` to be a pure virtual function, and so `Hittable` is an abstract
+    class, which means it itself cannot be instantiated (good, as it's only an interface). */
     virtual std::optional<hit_info> hit_by(const Ray3D &ray, const Interval &ray_times) const = 0;
 
-    /* Returns the AABB (Axis-Aligned Bounding Box) for this `Hittable` object */
+    /* Returns the AABB (Axis-Aligned Bounding Box) for this `Hittable` object.
+    
+    Note that any AABB can be returned. Obviously, though, smaller AABB's are better; they reduce
+    the chance that a ray will collide with them, which results in more intersection checks in
+    the BVH. */
     virtual AABB get_aabb() const = 0;
 
     /* Prints this `Hittable` object to the `std::ostream` specified by `os`. */

@@ -23,7 +23,7 @@ public:
     auto& operator[] (size_t index) {return objects[index];}
     const auto& operator[] (size_t index) const {return objects[index];}
 
-    /* Add a object, stored within a `std::shared_ptr`, to the list of objects */
+    /* Add a object, stored within a `std::shared_ptr`, to this `Scene` */
     void add(std::shared_ptr<Hittable> object) {
         /* Pass `shared_ptr` by copy, so this `Scene` will keep the object alive
         as long as it itself has not been destroyed */

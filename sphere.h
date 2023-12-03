@@ -8,8 +8,9 @@
 #include "ray3d.h"
 #include "material.h"
 
-/* A sphere in 3D space is represented by its center and its radius. */
+/* `Sphere` represents an abstraction voer a sphere in 3D space. */
 struct Sphere : public Hittable {
+    /* Here, a `Sphere` is represented by its center and its radius. */
     Point3D center;
     double radius;
     std::shared_ptr<Material> material;
@@ -97,7 +98,7 @@ struct Sphere : public Hittable {
     /* Constructs a Sphere with center `center_`, radius `radius_`, and material
     specified by `material_` */
     Sphere(const Point3D &center_, double radius_, std::shared_ptr<Material> material_)
-        : center{center_}, radius{radius_}, material{material_} {}
+        : center{center_}, radius{radius_}, material{std::move(material_)} {}
 };
 
 #endif
