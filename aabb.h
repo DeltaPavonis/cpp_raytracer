@@ -125,18 +125,31 @@ public:
     }
 
     /* Updates (possibly expands) this `AABB` to also bound the `AABB` `other`. */
-    void merge_with(const AABB &other) {
+    auto& merge_with(const AABB &other) {
         /* Just combine the x-, y-, and z- intervals with those from `other` */
         x.merge_with(other.x);
         y.merge_with(other.y);
         z.merge_with(other.z);
+        return *this;
     }
 
     /* Updates (possibly expands) this `AABB` to also bound the `Point3D` `p`. */
-    void merge_with(const Point3D &p) {
+    auto& merge_with(const Point3D &p) {
         x.merge_with(p.x);
         y.merge_with(p.y);
         z.merge_with(p.z);
+        return *this;
+    }
+
+    /* Setters */
+
+    /* Pads all axes with length less than `min_axis_length` to have length exactly
+    `min_axis_length` (well, "exactly" as far as floating-point arithmetic can give you). */
+    auto& ensure_min_axis_length(double min_axis_length) {
+        if (x.size() < min_axis_length) {x.pad_with((min_axis_length - x.size()) / 2);}
+        if (y.size() < min_axis_length) {y.pad_with((min_axis_length - y.size()) / 2);}
+        if (z.size() < min_axis_length) {z.pad_with((min_axis_length - z.size()) / 2);}
+        return *this;
     }
 
     /* Overload `operator<<` to allow printing `AABB`s to output streams */
@@ -146,7 +159,10 @@ public:
 
     /* The default constructor contructs an empty `AABB`; that is, the `AABB` where all intervals
     are the empty interval `Interval::empty()`. Note: Prefer using the named constructor
-    `AABB::empty()` instead; its functionality is equivalent, and it is more readable.  */
+    `AABB::empty()` instead; its functionality is equivalent, and it is more readable. This
+    default constructor exists merely to allow other classes which have an `AABB` as a member
+    to themselves be default constructible without having to specify a default member initializer
+    for fields of type `AABB`. */
     AABB() : AABB(Interval::empty(), Interval::empty(), Interval::empty()) {}
 
     /* --- NAMED CONSTRUCTORS --- */
@@ -160,17 +176,20 @@ public:
 
     /* Constructs an AABB (Axis-Aligned Bounding Box) consisting of all points with x-coordinate
     in the interval `x_`, y-coordinate in the interval `y_`, and z-coordinate in the range `z_`.
-    In other words, this creates the AABB from the three "slabs" `x_`, `y_`, and `z_`. */
-    static AABB from_intervals(const Interval &x_, const Interval &y_, const Interval &z_) {
+    In other words, this creates the AABB from the three "slabs" (axis intervals) `x_`, `y_`, and
+    `z_`. */
+    static AABB from_axis_intervals(const Interval &x_, const Interval &y_, const Interval &z_) {
         return AABB(x_, y_, z_);
     }
 
-    /* Constructs an AABB (Axis-Aligned Bounding Box) with extreme points `a` and `b`; that is,
-    the smallest axis-aligned bounding box that contains the points `a` and `b`. */
-    static AABB from_extrema(const Point3D &a, const Point3D &b) {
-        return AABB(Interval(std::fmin(a.x, b.x), std::fmax(a.x, b.x)),
-                    Interval(std::fmin(a.y, b.y), std::fmax(a.y, b.y)),
-                    Interval(std::fmin(a.z, b.z), std::fmax(a.z, b.z)));
+    /* Constructs the minimum-volume AABB (Axis-Aligned Bounding Box) containing all the points
+    specified in `points`. */
+    static AABB from_points(std::initializer_list<Point3D> points) {
+        auto ret = AABB::empty();
+        for (const auto &p : points) {
+            ret.merge_with(p);
+        }
+        return ret;
     }
 
     /* Returns the minimum-volume `AABB` that contains both of the `AABB`s `a` and `b`.

@@ -49,15 +49,22 @@ struct hit_info {
     {
         /* Determine, based on the directions of the ray and the outward surface normal at
         the ray's point of intersection, whether the ray was shot from inside the surface
-        or from outside the surface. */
+        or from outside the surface. Set `unit_surface_normal` correspondingly: if the ray
+        was shot from inside the surface, then the unit surface normal should point inward,
+        and if the ray was shot from outside the surface, then the unit surface normal should
+        point outward. */
         if (dot(ray.dir, outward_unit_surface_normal) > 0) {
             /* Then the angle between the ray and the outward surface normal is in [0, 90) degrees,
-            which means the ray originated INSIDE the object. So: */
+            which means the ray originated INSIDE the object, and so the true surface normal will
+            also point inward, and so we set `unit_surface_normal` equal to the negative of
+            `outward_unit_surface_normal`. We also set `hit_from_outside` to false. */
             unit_surface_normal = -outward_unit_surface_normal;  /* Flip outward surface normal */
             hit_from_outside = false;
         } else {
             /* Then the angle between the ray and the outward surface normal is in [90, 180)
-            degrees, which means the ray originated OUTSIDE the object. */
+            degrees, which means the ray originated OUTSIDE the object, and so the true surface
+            normal will point outward, and so we just set `unit_surface_normal` to
+            `outward_unit_surface_normal` itself. We also set `hit_from_outside` to true. */
             unit_surface_normal = outward_unit_surface_normal;
             hit_from_outside = true;
         }

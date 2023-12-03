@@ -3,81 +3,78 @@
 #include "scene.h"
 #include "material.h"
 #include "camera.h"
+#include "parallelogram.h"
 
-using namespace std;
+/* Instead of `std::make_shared<T>`, I just need to type `ms<T>` now. */
+template<typename T, typename... Args>
+auto ms(Args&&... args) -> std::shared_ptr<T> {
+    return std::make_shared<T>(std::forward<Args>(args)...);
+}
+
+/* First Parallelogram test (corresponds to the image rendered at the end of Section 6
+of The Next Week)*/
+void parallelogram_test() {
+    Scene world;
+
+    auto left_red     = std::make_shared<Lambertian>(RGB::from_mag(1.0, 0.2, 0.2));
+    auto back_green   = std::make_shared<Lambertian>(RGB::from_mag(0.2, 1.0, 0.2));
+    auto right_blue   = std::make_shared<Lambertian>(RGB::from_mag(0.2, 0.2, 1.0));
+    auto upper_orange = std::make_shared<Lambertian>(RGB::from_mag(1.0, 0.5, 0.0));
+    auto lower_teal   = std::make_shared<Lambertian>(RGB::from_mag(0.2, 0.8, 0.8));
+
+    // Quads
+    world.add(ms<Parallelogram>(Point3D(-3,-2, 5), Vec3D(0, 0,-4), Vec3D(0, 4, 0), left_red));
+    world.add(ms<Parallelogram>(Point3D(-2,-2, 0), Vec3D(4, 0, 0), Vec3D(0, 4, 0), back_green));
+    world.add(ms<Parallelogram>(Point3D( 3,-2, 1), Vec3D(0, 0, 4), Vec3D(0, 4, 0), right_blue));
+    world.add(ms<Parallelogram>(Point3D(-2, 3, 1), Vec3D(4, 0, 0), Vec3D(0, 0, 4), upper_orange));
+    world.add(ms<Parallelogram>(Point3D(-2,-3, 5), Vec3D(4, 0, 0), Vec3D(0, 0,-4), lower_teal));
+
+    Camera().set_image_by_width_and_aspect_ratio(1000, 1.)
+            .set_samples_per_pixel(100)
+            .set_max_depth(50)
+            .set_vertical_fov(80)
+            .set_camera_center(Point3D{0, 0, 9})
+            .set_camera_direction_towards(Point3D{0, 0, 0})
+            .set_camera_up_direction(Point3D{0, 1, 0})
+            .turn_blur_off()
+            .render(world)
+            .send_as_ppm("image_temp.ppm");
+}
+
+/* Renders an empty Cornell Box. */
+void cornell_box_test() {
+
+    Scene world;
+
+    auto red   = ms<Lambertian>(RGB::from_mag(.65, .05, .05));
+    auto white = ms<Lambertian>(RGB::from_mag(.73, .73, .73));
+    auto green = ms<Lambertian>(RGB::from_mag(.12, .45, .15));
+    auto light = ms<DiffuseLight>(RGB::from_mag(1, 1, 1), 15);
+
+    /* Walls and light of the standard Cornell Box */
+    world.add(ms<Parallelogram>(Point3D(555,0,0), Vec3D(0,555,0), Vec3D(0,0,555), green));
+    world.add(ms<Parallelogram>(Point3D(0,0,0), Vec3D(0,555,0), Vec3D(0,0,555), red));
+    world.add(ms<Parallelogram>(Point3D(343, 554, 332), Vec3D(-130,0,0), Vec3D(0,0,-105), light));
+    world.add(ms<Parallelogram>(Point3D(0,0,0), Vec3D(555,0,0), Vec3D(0,0,555), white));
+    world.add(ms<Parallelogram>(Point3D(555,555,555), Vec3D(-555,0,0), Vec3D(0,0,-555), white));
+    world.add(ms<Parallelogram>(Point3D(0,0,555), Vec3D(555,0,0), Vec3D(0,555,0), white));
+
+    /* 2160 width, 1. aspect ratio, 25000 samples per pixel, 50 max depth took 1:31:27 */
+    Camera().set_image_by_width_and_aspect_ratio(1000, 1.)
+        .set_samples_per_pixel(500)
+        .set_max_depth(50)
+        .set_vertical_fov(40)
+        .set_camera_center(Point3D{278, 278, -800})
+        .set_camera_direction_towards(Point3D{278, 278, 0})
+        .set_camera_up_direction(Point3D{0, 1, 0})
+        .turn_blur_off()
+        .set_background(RGB::from_mag(0))  /* Black background */
+        .render(world)
+        .send_as_ppm("empty_cornell_box.ppm");
+}
 
 int main()
 {
-    Scene world;
-
-    /* The same code as from the tutorial for their final scene */
-
-    /* Big gray sphere for the ground */
-    auto ground_material = std::make_shared<Lambertian>(RGB::from_mag(0.5, 0.5, 0.5));
-    world.add(std::make_shared<Sphere>(Point3D(0,-1000000,0), 1000000, ground_material));
-
-    /* Generate small spheres */
-    for (int a = -1001; a < 1001; a++) {
-        for (int b = -1501; b < 51; b++) {
-            auto choose_mat = rand_double();
-            Point3D center(a + 0.9*rand_double(), 0.2, b + 0.9*rand_double());
-
-            if ((center - Point3D(4, 0.2, 0)).mag() > 0.9) {
-                std::shared_ptr<Material> sphere_material;
-
-                if (choose_mat < 0.035) {
-                    auto albedo = RGB::random();
-                    sphere_material = std::make_shared<DiffuseLight>(albedo, rand_double(5, 15));
-                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
-                } else if (choose_mat < 0.8) {
-                    // diffuse
-                    auto albedo = RGB::random() * RGB::random();
-                    sphere_material = std::make_shared<Lambertian>(albedo);
-                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
-                } else if (choose_mat < 0.9) {
-                    // Metal
-                    auto albedo = RGB::random(0.5, 1);
-                    auto fuzz = rand_double(0, 0.5);
-                    sphere_material = std::make_shared<Metal>(albedo, fuzz);
-                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
-                } else {
-                    // glass
-                    sphere_material = std::make_shared<Dielectric>(1.5);
-                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
-                }
-            }
-        }
-    }
-
-    /* Three big spheres */
-    auto material1 = std::make_shared<Dielectric>(1.5);
-    world.add(std::make_shared<Sphere>(Point3D(0, 1, 0), 1.0, material1));
-
-    auto material2 = std::make_shared<Lambertian>(RGB::from_mag(0.4, 0.2, 0.1));
-    world.add(std::make_shared<Sphere>(Point3D(-4, 1, 0), 1.0, material2));
-
-    auto material3 = std::make_shared<Metal>(RGB::from_mag(0.7, 0.6, 0.5), 0.0);
-    world.add(std::make_shared<Sphere>(Point3D(4, 1, 0), 1.0, material3));
-    
-    /* Big light directly up from the origin */
-    auto light_material = std::make_shared<DiffuseLight>(
-        RGB::from_mag(0.380205, 0.680817, 0.385431),
-        150
-    );
-    world.add(std::make_shared<Sphere>(Point3D(0, 12, 0), 3, light_material));
-
-    /* Render image; takes ~2 hours on my Dell XPS 8960 with 16 cores and 24 threads */
-    Camera().set_image_by_width_and_aspect_ratio(3840, 16. / 9.)
-            .set_vertical_fov(40)  /* Smaller FOV means more zoomed in (also avoids stretching) */
-            .set_camera_center(Point3D{0, 12.5, 50})
-            .set_camera_lookat(Point3D{0, 0, 0})
-            .set_camera_up_direction(Vec3D{0, 1, 0})
-            .set_defocus_angle(0.1)
-            .set_focus_distance(51)
-            .set_samples_per_pixel(10000)  /* For a high-quality image */
-            .set_max_depth(20)  /* More light bounces for higher quality */
-            .render(world)
-            .send_as_ppm("millions_of_spheres_with_lights.ppm");
-
+    cornell_box_test();
     return 0;
 }

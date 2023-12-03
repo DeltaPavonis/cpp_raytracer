@@ -62,7 +62,7 @@ class Camera {
     of the defocus disk. Both are determined by `focal_length`, `defocus_angle`,  and
     `cam_basis_x/y`. */
     Vec3D defocus_disk_x, defocus_disk_y;
-    /* Coordinates of the top-left image pixel */
+    /* Coordinates of the top-left image pixel (calculated in `init()`) */
     Point3D pixel00_loc;
     /* Number of rays sampled per pixel, 100 by default */
     size_t samples_per_pixel = 100;
@@ -76,6 +76,10 @@ class Camera {
     determined from the vertical FOVof 90 degrees  and the aspect ratio of the images in `init()`.
     */
     std::optional<double> vertical_fov{90}, horizontal_fov;
+    /* `background` = The default background color of scenes rendered by this `Camera`. That is,
+    whenever a ray hits no object in the scene, this color is returned as the color of that ray.
+    `RGB::from_mag(0.5)` (gray; halfway between white and black) by default. */
+    RGB background{RGB::from_mag(0.5)};
 
     /* Set the values of `viewport_w`, `viewport_h`, `pixel_delta_x`, `pixel_delta_y`,
     `upper_left_corner`, and `pixel00_loc` based on `image_w` and `image_h`. This function
@@ -238,14 +242,15 @@ class Camera {
             we always return `RGB::zero()` when a ray flies into the background). As a result,
             all light in the resulting render comes from an actual light source, and not just
             from the background. */
+            return background;
             return RGB::zero();
 
             /* If this ray doesn't intersect any object in the scene, then its color is determined
             by the background. Here, the background is a blue-to-white gradient depending on the
             ray's y-coordinate; bluer for lesser y-coordinates and whiter for larger y-coordinates
             (so bluer at the top and whiter at the bottom). */
-            // return lerp(RGB::from_mag(1, 1, 1), RGB::from_mag(0.5, 0.7, 1),
-                        // 0.5 * ray.dir.unit_vector().y + 0.5);
+            return lerp(RGB::from_mag(1, 1, 1), RGB::from_mag(0.5, 0.7, 1),
+                        0.5 * ray.dir.unit_vector().y + 0.5);
         }
     }
 
@@ -266,7 +271,7 @@ public:
         #pragma omp parallel for schedule(dynamic, thread_chunk_size)
         for (size_t row = 0; row < image_h; ++row) {
             for (size_t col = 0; col < image_w; ++col) {
-
+                
                 /* Shoot `samples_per_pixel` random rays through the current pixel.
                 The average of the resulting colors will be the color for this pixel. */
                 auto pixel_color = RGB::zero();
@@ -314,6 +319,7 @@ public:
     distance. */
     auto& set_camera_direction_towards(const Point3D &p) {
         camera.dir = p - camera.origin;
+        camera_lookat.reset();
         return *this;
     }
     /* Set the camera direction to always be towards the point `p`, no matter where the camera
@@ -382,6 +388,13 @@ public:
     auto& set_horizontal_fov(double horizontal_fov_degrees) {
         horizontal_fov = horizontal_fov_degrees * std::numbers::pi / 180;  /* convert to radians */
         vertical_fov.reset();
+        return *this;
+    }
+    /* Sets the default background color of the camera to `background_color`. This means that any
+    ray which hits no object in a scene being rendered by this `Camera` will have color equal to
+    `background_color`. */
+    auto& set_background(const RGB &background_color) {
+        background = background_color;
         return *this;
     }
 

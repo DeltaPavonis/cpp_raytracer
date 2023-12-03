@@ -45,6 +45,16 @@ struct Interval {
         max = std::fmax(max, d);
     }
 
+    /* Setters */
+
+    /* Pads this interval with `padding`; that is, expands this `Interval` by `padding` on both
+    ends. */
+    auto& pad_with(double padding) {
+        min -= padding;
+        max += padding;
+        return *this;
+    }
+
     /* --- CONSTRUCTORS --- */
 
     /* Constructs an `Interval` from `min_` to `max_`. */
