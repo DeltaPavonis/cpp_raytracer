@@ -32,7 +32,7 @@ struct hit_info {
     Vec3D unit_surface_normal;
     /* `hit_from_outside` = Whether or not the ray hit the outside of the surface. */
     bool hit_from_outside = false;  /* Named `front_face` in the tutorial */
-    /* `material` points to the `Material` of the object which the ray intersected */
+    /* `material` points to the `Material` of the object which the ray intersected. */
     const Material* material;
 
     /* --- CONSTRUCTORS ---*/
@@ -81,17 +81,51 @@ std::ostream& operator<< (std::ostream &os, const hit_info &info) {
 
 struct Hittable {
     
-    /* Check if the object is hit by a ray in the time range specified by `ray_times`.
-    = 0 causes `hit_by` to be a pure virtual function, and so `Hittable` is an abstract
-    class, which means it itself cannot be instantiated (good, it's only an interface). */
+    /* Returns a `hit_info` with information about the earliest intersection of the ray
+    `ray` with this `Hittable` in the time range `ray_times`. If there is no such
+    intersection, then an empty `std::optional<hit_info>` is returned.
+
+    The = 0 causes `hit_by` to be a pure virtual function, and so `Hittable` is an abstract
+    class, which means it itself cannot be instantiated (good, it's meant to only be an
+    interface). */
     virtual std::optional<hit_info> hit_by(const Ray3D &ray, const Interval &ray_times) const = 0;
 
     /* Returns the AABB (Axis-Aligned Bounding Box) for this `Hittable` object */
     virtual AABB get_aabb() const = 0;
 
+    /* When a BVH (Bounding Volume Hierarchy) is built over a list of `Hittable`s, each `Hittable`
+    in the list will be treated as a single indivisible unit. That is, when the BVH reaches a
+    `Hittable`, it will not try to split it any further, because it sees the `Hittable` as an
+    indivisible object. However, in reality, `Hittable`s are allowed to contain other `Hittable`s;
+    these are called compound `Hittable`s, which include `Scene`, `Box`, and so on. This leads to a
+    problem: because BVH's are unable to split compound `Hittable`s into their constituent
+    `Hittable` components, ray-scene intersection tests will not be fully accelerated by the `BVH`,
+    resulting in higher runtimes. For instance, if I had a complex `Hittable` with millions of
+    `Hittable` components, then a BVH over a `Scene` containing that `Hittable` would treat it as
+    a single primitive, and so it would not try to further split the millions of `Hittable`
+    components. This would result in the millions of `Hittable` components being checked by
+    brute-force whenever a ray-intersection test reaches the complex `Hittable`, which is clearly
+    undesirable.
+
+    To fix this problem, we allow `Hittable`s to return a `std::vector<std::shared_ptr<Hittable>>`
+    representing its constituent `Hittable` components. Then, when building a BVH over a `Scene`
+    containing a `Hittable`, the `BVH` will build over the primitive components of all objects
+    in the `Scene`, rather than just being built over the objects themselves. NOTE THAT IF A
+    `Hittable` TYPE IS ALREADY AN INDIVISIBLE PRIMITIVE (such as `Sphere`), THEN IT SHOULD
+    RETURN THE EMPTY `std::vector`; this is the default, and it tells the `BVH` to treat the
+    current `Hittable` as an indivisible unit when it is being built over a `Scene`. */
+    virtual std::vector<std::shared_ptr<Hittable>> get_primitive_components() const {
+
+        /* Again, objects that are already indivisible primitives (that have no primitive
+        components) should return `{}` from this function, which is the default. */
+        return {};
+    }
+
     /* Prints this `Hittable` object to the `std::ostream` specified by `os`. */
     virtual void print_to(std::ostream &os) const = 0;
 
+    /* We need a virtual destructor for `Hittable`, because we will be "deleting [instances]
+    of a derived class through a pointer to [the] base class". See https://tinyurl.com/hnutv8se. */
     virtual ~Hittable() = default;
 };
 

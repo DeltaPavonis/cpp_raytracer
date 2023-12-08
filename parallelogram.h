@@ -42,6 +42,8 @@ class Parallelogram : public Hittable {
     `Parallelogram::hit_by()`. */
     Vec3D scaled_plane_normal;
 
+    AABB aabb;
+
 public:
 
     /* There are three steps to perform a ray-parallelogram intersection check:
@@ -193,20 +195,7 @@ public:
 
     /* Returns the AABB (Axis-Aligned Bounding Box) for this `Parallelogram`. */
     AABB get_aabb() const override {
-
-        /* We just return the `AABB` containing all vertices of this parallelogram; that is,
-        the AABB containing `vertex`, `vertex + side1`, `vertex + side2`, and the opposite
-        vertex (which, remember, is calculated by `vertex + side1 + side2` for parallelograms).
-        Then, because parallelograms are 2D, the resulting AABB may have zero thickness in one
-        of its dimensions if it is parallel to the xy-/xz-/yz-plane, which can result in numerical
-        issues. To avoid this, we pad the axis intervals of the AABB, making sure that every
-        axis interval has length at least some small constant (1e-4 here). */
-        return AABB::from_points({
-            vertex,                  /* The given vertex of this parallelogram */
-            vertex + side1,          /* The vertex opposite to `vertex` along the first side */
-            vertex + side2,          /* The vertex opposite to `vertex` along the second side */
-            vertex + side1 + side2   /* The vertex opposite to `vertex` in this  parallelogram */
-        }).ensure_min_axis_length(1e-4);  /* Make sure each axis of the AABB has length >= 1e-4 */
+        return aabb;
     }
 
     /* Prints this `Parallelogram` to the `std::ostream` specified by `os`. */
@@ -241,6 +230,22 @@ public:
         unit_plane_normal = plane_normal.unit_vector();
         /* Note that dot(n, n) = |n|^2, so `scaled_plane_normal` = n / dot(n, n) = n / |n|^2. */
         scaled_plane_normal = plane_normal / plane_normal.mag_squared();
+
+        /* The `AABB` for a `Parallelogram` is simply the minimum-size `AABB` that contains all the
+        vertices of the parallelogram; that is, the `AABB` containing `vertex`, `vertex + side1`,
+        `vertex + side2`, and the opposite vertex (which, remember, is calculated by
+        `vertex + side1 + side2` for parallelograms).
+
+        Then, because parallelograms are 2D, the resulting AABB may have zero thickness in one
+        of its dimensions if it is parallel to the xy-/xz-/yz-plane, which can result in numerical
+        issues. To avoid this, we pad the axis intervals of the AABB, making sure that every
+        axis interval has length at least some small constant (1e-4 here). */
+        aabb = AABB::from_points({
+            vertex,                  /* The given vertex of this parallelogram */
+            vertex + side1,          /* The vertex opposite to `vertex` along the first side */
+            vertex + side2,          /* The vertex opposite to `vertex` along the second side */
+            vertex + side1 + side2   /* The vertex opposite to `vertex` in this  parallelogram */
+        }).ensure_min_axis_length(1e-4);  /* Make sure each axis of the AABB has length >= 1e-4 */
     }
 };
 

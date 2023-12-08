@@ -36,8 +36,8 @@ struct Sphere : public Hittable {
     not necessarily the ray (so if the sphere was located behind the camera, it could still be
     drawn). We will fix this in the future. */
 
-    /* `Sphere::hit_by(ray)` returns a `std::optional<hit_info>` object representing the minimum
-    time of intersection in the time range specified by `ray_times`, of `ray` with this Sphere.
+    /* `Sphere::hit_by(ray)` returns a `std::optional<hit_info>` object with information about
+    the earliest intersection in the time range specified by `ray_times`, of `ray` with this Sphere.
     If `ray` does not hit this Sphere in the interval `ray_times`, an empty `std::optional` object
     is returned. */
     std::optional<hit_info> hit_by(const Ray3D &ray, const Interval &ray_times) const override {    
@@ -54,7 +54,9 @@ struct Sphere : public Hittable {
 
         /* If the quadratic has solutions, find the smallest one in the range `ray_times` */
         auto discriminant_quarter_sqrt = std::sqrt(discriminant_quarter);  /* Evaluate this once */
-        auto root = (-b_half - discriminant_quarter_sqrt) / a;  /* Check smaller root first */
+        /* Check smaller root (hit time) first, because we want to find the earliest intersection
+        of the ray `ray` with this Sphere in the given time range `ray_times`. */
+        auto root = (-b_half - discriminant_quarter_sqrt) / a;
 
         if (!ray_times.contains_exclusive(root)) {
             /* Smaller root not in the range `ray_times`, try the other root */

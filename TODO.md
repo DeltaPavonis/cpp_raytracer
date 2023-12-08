@@ -1,0 +1,5 @@
+- Optimize BVH by compressing the binary tree to an array
+- Add textures
+- Add instancing (translations and rotations)
+- Add volumes (smoke, fog, etc)
+    - Procedurally generate volumes (don't just have a block of fog)
