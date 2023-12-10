@@ -4,7 +4,6 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/home/kxiao/devel/competitive/kxlib"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

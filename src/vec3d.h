@@ -17,6 +17,7 @@ struct Vec3D {
     /* Returns the coordinate of this `Vec3D` on the axis specified by `axis`. Specifically,
     returns the `x`-, `y`-, and `z`- coordinate if `axis` is `0`, `1`, or `2`, respectively. */
     const auto& operator[] (size_t axis) const {return (axis == 0 ? x : (axis == 1 ? y : z));}
+    auto& operator[] (size_t axis) {return (axis == 0 ? x : (axis == 1 ? y : z));}
 
     /* Mathematical negation, +=, -=, *=, /= operators */
 

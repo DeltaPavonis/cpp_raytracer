@@ -108,9 +108,10 @@ class BVH : public Hittable {
     `NUM_BUCKETS` = the number of buckets to test
     */
     const size_t MAX_PRIMITIVES_IN_NODE, NUM_BUCKETS;
-    /* `total_bvh_nodes` = the number of `BVHNode`s in this `BVH` tree. This does not count
-    the `Scene`s made in `BVHNode::as_leaf_node()`, which the leaf `BVHNodes` point to. */
-    size_t total_bvh_nodes = 0;
+    /* `total_bvhnodes` = the number of `BVHNode`s in this `BVH` tree. This does not count
+    the `Scene`s made in `BVHNode::as_leaf_node()`, which the leaf `BVHNodes` point to. That is,
+    this does not count the actual number of BVH nodes; this counts the number of `BVHNode`s. */
+    size_t total_bvhnodes = 0;
 
     /* Used to have "free on memory that was not `malloc`ed" error. Fixed it with this change:
     before, `objects` was a vector of `Hittable*`, and in the `start == end - 1` condition seems
@@ -125,7 +126,7 @@ class BVH : public Hittable {
     memory, and when the second reference counter drops to 0, it tries to destroy the object again,
     leading to the double-free error. */
     auto build(std::span<std::shared_ptr<Hittable>> objects) {
-        ++total_bvh_nodes;
+        ++total_bvhnodes;
 
         /* If there is only one primitive left, then we will return a leaf `BVHNode`
         (a `BVHNode` whose children are both primitives) that just contains that one primitive. */
@@ -396,18 +397,22 @@ public:
         : MAX_PRIMITIVES_IN_NODE{max_primitives_in_node},
           NUM_BUCKETS{num_buckets}
     {
-        std::cout << "Building BVH over " << world.size() << " primitives..." << std::endl;
+        /* Build the Bounding Volume Hierarchy over the primitive components of the `Hittable`
+        objects in the scene, rather than just the objects themselves. This is because
+        `Hittable` objects may be compound; they may contain other `Hittable`s. Building a
+        `BVH` over just the `Hittable` objects themselves could therefore */
+        auto primitive_components = world.get_primitive_components();
+
+        std::cout << "Building BVH over " << world.size() << " objects ("
+                  << primitive_components.size() << " primitives)..." << std::endl;
         auto start = std::chrono::steady_clock::now();
 
-        /* Create a copy of the objects list of `world`, because `world` is passed as `const&`, but
-        we need to modify the objects list when building the `BVH` (specifically, we may need to
-        rearrange it using `std::partition`) */
-        std::vector<std::shared_ptr<Hittable>> objects_copy = world;
-        root = build(objects_copy);
+        /* Build the `BVH` */
+        root = build(primitive_components);
 
         std::cout << "Constructed BVH in "
                   << ms_diff(start, std::chrono::steady_clock::now())
-                  << "ms (created " << total_bvh_nodes << " BVHNodes total)\n" << std::endl;
+                  << "ms (created " << total_bvhnodes << " BVHNodes total)\n" << std::endl;
     }
 };
 
