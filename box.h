@@ -42,6 +42,7 @@ public:
 
     /* Returns the `AABB` for this `Box`. */
     AABB get_aabb() const override {
+        /* Once more, we delegate this to the `Scene` field. */
         return faces.get_aabb();
     }
 

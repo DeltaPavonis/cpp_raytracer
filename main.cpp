@@ -85,7 +85,7 @@ void cornell_box_test(bool empty = false) {
         .turn_blur_off()
         .set_background(RGB::from_mag(0))  /* Black background */
         .render(world)
-        .send_as_ppm("cornell_box_1.ppm");
+        .send_as_ppm((empty ? "empty_cornell_box.ppm" : "cornell_box_1.ppm"));
 }
 
 void raining_on_the_dance_floor() {
@@ -140,7 +140,7 @@ void raining_on_the_dance_floor() {
 
 int main()
 {
-    switch(0) {
+    switch(2) {
         case 0: parallelogram_test(); break;
         case 1: cornell_box_test(true); break;
         case 2: cornell_box_test(false); break;

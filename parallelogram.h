@@ -42,6 +42,7 @@ class Parallelogram : public Hittable {
     `Parallelogram::hit_by()`. */
     Vec3D scaled_plane_normal;
 
+    /* `aabb` = The AABB (Axis-Aligned Bounding Box) for this `Parallelogram`. */
     AABB aabb;
 
 public:

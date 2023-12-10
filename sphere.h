@@ -18,6 +18,8 @@ struct Sphere : public Hittable {
     double radius;
     /* `material`: The material of this `Sphere` object. */
     std::shared_ptr<Material> material;
+    /* `aabb` = The AABB (Axis-Aligned Bounding Box) for this `Sphere`. */
+    AABB aabb;
 
     /* A ray hits a sphere iff it intersects its surface. Now, a sphere with radius R centered at
     C = (sx, sy, sz) can be expressed as the vector equation (P - C) dot (P - C) = R^2; any point
@@ -95,8 +97,7 @@ struct Sphere : public Hittable {
 
     /* Returns the AABB (Axis-Aligned Bounding Box) for this `Sphere`. */
     AABB get_aabb() const override {
-        auto radius_vector = Vec3D{radius, radius, radius};
-        return AABB::from_points({center - radius_vector, center + radius_vector});
+        return aabb;
     }
 
     /* Prints this `Sphere` to the `std::ostream` specified by `os`. */
@@ -109,7 +110,16 @@ struct Sphere : public Hittable {
     /* Constructs a Sphere with center `center_`, radius `radius_`, and material
     specified by `material_` */
     Sphere(const Point3D &center_, double radius_, std::shared_ptr<Material> material_)
-        : center{center_}, radius{radius_}, material{material_} {}
+        : center{center_}, radius{radius_}, material{material_}
+    {
+        /* Compute the AABB for this `Sphere`. To do this, simply observe that the AABB's x-, y-,
+        and z-intervals are [center.x/y/z - radius, center.x/y/z + radius]. In other words, the
+        AABB of a sphere is just the axis-aligned cube with side length equal to 2 * radius
+        centered at the sphere's center. Thus, the AABB is constructed from the two points
+        (center.x +- radius, center.y +- radius, center.z +- radius). */
+        auto radius_vector = Vec3D{radius, radius, radius};
+        aabb = AABB::from_points({center - radius_vector, center + radius_vector});
+    }
 };
 
 #endif
