@@ -1,3 +1,6 @@
+#ifndef TIME_UTIL_H
+#define TIME_UTIL_H
+
 #include <string>
 #include <chrono>
 #include <array>
@@ -39,3 +42,5 @@ std::string seconds_to_dhms(long long seconds_left) {
 
     return ret;
 }
+
+#endif

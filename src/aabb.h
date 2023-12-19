@@ -124,6 +124,55 @@ public:
         return true;
     }
 
+    /* Returns `true` if the ray `ray` intersects this `AABB` in the time range specified by
+    `ray_times`. This function also takes the precomputed values `inverse_ray_direction`
+    (the vector with components equal to the reciprocals of the given ray `ray`'s direction),
+    and `direction_is_negative` (where `direction_is_negative[i]` = whether or not `ray.dir[i]`
+    is negative). */
+    bool is_hit_by_optimized(
+        const Ray3D &ray, const Interval &ray_times,
+        const Vec3D &inverse_ray_direction,
+        const std::array<bool, 3> &direction_is_negative
+    ) const {
+
+        /* Precomputing `direction_is_negative` lets us directly compute the minimum and
+        maximum time of intersection for each axis, rather than having to compute both
+        times of intersection and then comparing them to see which one is the minimum. */
+        auto x_tmin = (x[ direction_is_negative[0]] - ray.origin.x) * inverse_ray_direction.x;
+        auto x_tmax = (x[!direction_is_negative[0]] - ray.origin.x) * inverse_ray_direction.x;
+        auto y_tmin = (y[ direction_is_negative[1]] - ray.origin.y) * inverse_ray_direction.y;
+        auto y_tmax = (y[!direction_is_negative[1]] - ray.origin.y) * inverse_ray_direction.y;
+
+        /* If the x- and y- time intervals are disjoint, then the ray does not intersect
+        this AABB, and so we return false. */
+        if (x_tmin > y_tmax || y_tmin > x_tmax) {
+            return false;
+        }
+
+        /* Otherwise, we merge the intervals [x_tmin, x_tmax] and [y_tmin, y_tmax] into
+        `x_tmin` and `x_tmax`. */
+        if (y_tmin > x_tmin) {x_tmin = y_tmin;}
+        if (y_tmax < x_tmax) {x_tmax = y_tmax;}
+
+        /* Now, calculate the time interval for the ray's intersection along the z-axis */
+        auto z_tmin = (z[ direction_is_negative[2]] - ray.origin.z) * inverse_ray_direction.z;
+        auto z_tmax = (z[!direction_is_negative[2]] - ray.origin.z) * inverse_ray_direction.z;
+        if (x_tmin > z_tmax || z_tmin > x_tmax)  {
+            return false; 
+        }
+
+        /* Now, merge the merged x- and y- time intervals with the z-axis time interval.
+        After this, [x_tmin, x_tmax] gives the overall time interval for which the ray
+        `ray` intersects with this `AABB`. */
+        if (z_tmin > x_tmin) {x_tmin = z_tmin; }
+        if (z_tmax < x_tmax) {x_tmax = z_tmax;}
+
+        /* If the overall time interval of the ray `ray`'s intersection with this AABB
+        intersects with the given time interval `ray_times`, then there is a intersection.
+        Otherwise, there isn't. */
+        return (x_tmin < ray_times.max) && (x_tmax > ray_times.min);
+    }
+
     /* Updates (possibly expands) this `AABB` to also bound the `AABB` `other`. */
     auto& merge_with(const AABB &other) {
         /* Just combine the x-, y-, and z- intervals with those from `other` */
@@ -157,7 +206,7 @@ public:
 
     /* --- CONSTRUCTORS --- */
 
-    /* The default constructor contructs an empty `AABB`; that is, the `AABB` where all intervals
+    /* The default constructor constructs an empty `AABB`; that is, the `AABB` where all intervals
     are the empty interval `Interval::empty()`. Note: Prefer using the named constructor
     `AABB::empty()` instead; its functionality is equivalent, and it is more readable. This
     default constructor exists merely to allow other classes which have an `AABB` as a member

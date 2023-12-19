@@ -19,6 +19,10 @@ struct Interval {
     /* `min`/`max` = Minimum/maximum values in the interval, respectively */
     double min, max;
 
+    /* Returns the minimum bound of this `Interval` if `index` is 0, and otherwise returns the
+    maximum bound of this `Interval`. */
+    const auto& operator[] (size_t index) const {return (index ? max : min);}
+
     /* Returns the midpoint of this `Interval`; that is, `(min + max) / 2`. */
     auto midpoint() const {return std::midpoint(min, max);}
     /* Returns the size of this `Interval`; that is, `max - min`. */

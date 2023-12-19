@@ -42,6 +42,11 @@ DEBUG := $(SRC:.cpp=.dbg)
 RELEASE := $(SRC:.cpp=.rel)
 
 .PHONY: all clean
+.PRECIOUS: %.dbg.o %.rel.o
+# ^ Prevents `make` from automatically removing the `.dbg.o` and `.rel.o` files generated the first
+# time calling `make` after a `make clean`. See https://stackoverflow.com/a/56424855/12597781.
+# Also, note the answer on the bottom of the page; you MUST use `%.dbg.o` and `%.rel.o` exactly,
+# because that is how they are typed in their own rules below.
 
 all: $(DEBUG) $(RELEASE)
 
@@ -53,9 +58,6 @@ endif
 # Specifically, we generate a .dbg.o and a .rel.o file for every main
 
 %.dbg.o:%.cpp
-	# @echo "sources: $(SRC)"
-	# @echo "OBJ: $(OBJ)"
-	# @echo "DEP: $(DEP)"
 	$(CXX) $(CXXFLAGS) $(CXXDEBUG) $(SANITIZER) $< -c -o $@ $(LDFLAGS)
 
 %.rel.o:%.cpp

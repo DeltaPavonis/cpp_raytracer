@@ -199,9 +199,11 @@ class Camera {
         return Ray3D(ray_origin, pixel_sample - ray_origin);
     }
 
-    /* Computes and returns the color of the light ray `ray` shot into the scene `world`.
-    If `ray` has bounced more than `depth_left` times, returns `RGB::zero()`. */
-    auto ray_color(const Ray3D &ray, size_t depth_left, const Hittable &world) {
+    /* Computes and returns the color of the light ray `ray` shot into the `Hittable`
+    specified by `world`. If `ray` has bounced more than `depth_left` times, returns `RGB::zero()`. */
+    template<typename T>
+    requires std::is_base_of_v<Hittable, T>
+    auto ray_color(const Ray3D &ray, size_t depth_left, const T &world) {
 
         /* If the ray has bounced the maximum number of times, then no light is collected
         from it. Thus, we return the RGB color (r: 0, g: 0, b: 0). */
@@ -256,15 +258,20 @@ class Camera {
 
 public:
 
-    /* Renders the Scene `world` to an `Image` and returns that image.
+    /* Renders the `Hittable` specified by `world` to an `Image` and returns that image.
     Will render in parallel (using OpenMP for now) if available. */
-    auto render(const Hittable &world) {
+    template<typename T>  /* Guarantee static dispatch when possible using C++20 concepts */
+    requires std::is_base_of_v<Hittable, T>
+    auto render(const T &world) {
         init();
 
         /* Calculate and store the color of each pixel */
         auto img = Image::with_dimensions(image_w, image_h);
-        ProgressBar pb(image_h, "Rendering image");
-        
+        ProgressBar pb(
+            image_h,
+            "Rendering " + std::to_string(image_w) + " x " + std::to_string(image_h) + " image"
+        );
+
         /* Now use dynamic thread scheduling instead of static thread scheduling, with a block size
         of the maximum of `image_h` / 1024 and 1. */
         const size_t thread_chunk_size = std::max(image_h >> 10, size_t{1});
@@ -282,9 +289,8 @@ public:
                 pixel_color /= static_cast<double>(samples_per_pixel);
 
                 img[row][col] = pixel_color;
-             }
-
-             pb.update();
+            }
+            pb.update();
         }
         return img;
     }
@@ -375,16 +381,16 @@ public:
     a given light ray) to `max_depth_`. */
     auto& set_max_depth(size_t max_depth_) {max_depth = max_depth_; return *this;}
     /* Sets the vertical FOV (field of view) of the camera to `vertical_fov_degrees` degrees.
-    The horizontal FOV will then be inferred from `vertical_fov` and the image's aspect ratio
-    in `init()`. */
+    The horizontal FOV will then be determined by the `vertical_fov` and the image's aspect
+    ratio later in `init()`. */
     auto& set_vertical_fov(double vertical_fov_degrees) {
         vertical_fov = vertical_fov_degrees * std::numbers::pi / 180;  /* convert to radians */
         horizontal_fov.reset();
         return *this;
     }
     /* Sets the horizontal FOV (field of view) of the camera to `horizontal_fov_degrees` degrees.
-    The vertical FOV will then be inferred from `horizontal_fov` and the image's `aspect_ratio`
-    in `init()`. */
+    The vertical FOV will then be determined by the `horizontal_fov` and the image's
+    `aspect_ratio` later in `init()`. */
     auto& set_horizontal_fov(double horizontal_fov_degrees) {
         horizontal_fov = horizontal_fov_degrees * std::numbers::pi / 180;  /* convert to radians */
         vertical_fov.reset();

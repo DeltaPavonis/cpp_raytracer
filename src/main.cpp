@@ -12,6 +12,282 @@ auto ms(Args&&... args) -> std::shared_ptr<T> {
     return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
+void rtow_final_image() {
+    Scene world;
+
+    /* The same code as from the tutorial for their final scene */
+
+    /* Big gray sphere for the ground */
+    auto ground_material = std::make_shared<Lambertian>(RGB::from_mag(0.5, 0.5, 0.5));
+    world.add(std::make_shared<Sphere>(Point3D(0,-1000,0), 1000, ground_material));
+
+    /* Generate small spheres */
+    for (int a = -11; a < 11; a++) {
+        for (int b = -11; b < 11; b++) {
+            auto choose_mat = rand_double();
+            Point3D center(a + 0.9*rand_double(), 0.2, b + 0.9*rand_double());
+
+            if ((center - Point3D(4, 0.2, 0)).mag() > 0.9) {
+                std::shared_ptr<Material> sphere_material;
+
+                if (choose_mat < 0.8) {
+                    // diffuse
+                    auto albedo = RGB::random() * RGB::random();
+                    sphere_material = std::make_shared<Lambertian>(albedo);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else if (choose_mat < 0.95) {
+                    // Metal
+                    auto albedo = RGB::random(0.5, 1);
+                    auto fuzz = rand_double(0, 0.5);
+                    sphere_material = std::make_shared<Metal>(albedo, fuzz);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else {
+                    // glass
+                    sphere_material = std::make_shared<Dielectric>(1.5);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+
+    /* Three big spheres */
+    auto material1 = std::make_shared<Dielectric>(1.5);
+    world.add(std::make_shared<Sphere>(Point3D(0, 1, 0), 1.0, material1));
+
+    auto material2 = std::make_shared<Lambertian>(RGB::from_mag(0.4, 0.2, 0.1));
+    world.add(std::make_shared<Sphere>(Point3D(-4, 1, 0), 1.0, material2));
+
+    auto material3 = std::make_shared<Metal>(RGB::from_mag(0.7, 0.6, 0.5), 0.0);
+    world.add(std::make_shared<Sphere>(Point3D(4, 1, 0), 1.0, material3));
+
+    /* Render image */
+    Camera()
+        .set_image_by_width_and_aspect_ratio(1200, 16. / 9.)
+        .set_vertical_fov(20)  /* Smaller vertical FOV zooms in, also avoids shape stretching */
+        .set_camera_center(Point3D{13, 2, 3})
+        .set_camera_lookat(Point3D{0, 0, 0})
+        .set_camera_up_direction(Vec3D{0, 1, 0})
+        .set_defocus_angle(0.6)
+        .set_focus_distance(10)
+        .set_samples_per_pixel(500)  /* For a high-quality image */
+        .set_max_depth(20)  /* More light bounces for higher quality */
+        .set_background(RGB::from_mag(0.7, 0.8, 1))
+        .render(world)
+        .send_as_ppm("rtweekend_final_image.ppm");
+}
+
+void rtow_final_lights_with_tone_mapping() {
+    /* Now with custom fixed seeds. */
+    rng_seeds.seed_with(1541739242);
+
+    Scene world;
+
+    /* The same code as from the tutorial for their final scene */
+
+    /* Big gray sphere for the ground */
+    auto ground_material = std::make_shared<Lambertian>(RGB::from_mag(0.5, 0.5, 0.5));
+    world.add(std::make_shared<Sphere>(Point3D(0,-1000000,0), 1000000, ground_material));
+
+    /* Generate small spheres */
+    for (int a = -11; a < 11; a++) {
+        for (int b = -11; b < 11; b++) {
+            auto choose_mat = rand_double();
+            Point3D center(a + 0.9*rand_double(), 0.2, b + 0.9*rand_double());
+
+            if ((center - Point3D(4, 0.2, 0)).mag() > 0.9) {
+                std::shared_ptr<Material> sphere_material;
+
+                if (choose_mat < 0.035) {
+                    auto albedo = RGB::random();
+                    sphere_material = std::make_shared<DiffuseLight>(albedo, rand_double(30, 100));
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else if (choose_mat < 0.8) {
+                    // diffuse
+                    auto albedo = RGB::random() * RGB::random();
+                    sphere_material = std::make_shared<Lambertian>(albedo);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else if (choose_mat < 0.9) {
+                    // Metal
+                    auto albedo = RGB::random(0.5, 1);
+                    auto fuzz = rand_double(0, 0.5);
+                    sphere_material = std::make_shared<Metal>(albedo, fuzz);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else {
+                    // glass
+                    sphere_material = std::make_shared<Dielectric>(1.5);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+
+    /* Three big spheres */
+    auto material1 = std::make_shared<Dielectric>(1.5);
+    world.add(std::make_shared<Sphere>(Point3D(0, 1, 0), 1.0, material1));
+
+    auto material2 = std::make_shared<Lambertian>(RGB::from_mag(0.4, 0.2, 0.1));
+    world.add(std::make_shared<Sphere>(Point3D(-4, 1, 0), 1.0, material2));
+
+    auto material3 = std::make_shared<Metal>(RGB::from_mag(0.7, 0.6, 0.5), 0.0);
+    world.add(std::make_shared<Sphere>(Point3D(4, 1, 0), 1.0, material3));
+    
+    /* Light in the sky (like a moon) */
+    auto light_material = std::make_shared<DiffuseLight>(
+        RGB::from_mag(0.380205, 0.680817, 0.385431),
+        150
+    );
+    world.add(std::make_shared<Sphere>(Point3D(0, 2.5, 2.5), 0.2, light_material));
+
+    Camera().set_image_by_width_and_aspect_ratio(1080, 16. / 9.)
+            .set_vertical_fov(25)  /* Smaller vertical FOV zooms in, also avoids shape stretching */
+            .set_camera_center(Point3D{13, 2, 3})
+            .set_camera_lookat(Point3D{0, 0, 0})
+            .set_camera_up_direction(Vec3D{0, 1, 0})
+            .set_defocus_angle(0.48)
+            .set_focus_distance(10)
+            .set_samples_per_pixel(2000)  /* For a high-quality image */
+            .set_max_depth(20)  /* More light bounces for higher quality */
+            .set_background(RGB::zero())
+            .render(world)
+            .send_as_ppm("rtow_final_lights_with_tone_mapping.ppm");
+}
+
+void millions_of_spheres() {
+    Scene world;
+
+    /* The same code as from the tutorial for their final scene, except now with a lot more spheres
+    */
+
+    /* Big gray sphere for the ground */
+    auto ground_material = std::make_shared<Lambertian>(RGB::from_mag(0.5, 0.5, 0.5));
+    world.add(std::make_shared<Sphere>(Point3D(0,-1000000,0), 1000000, ground_material));
+
+    /* Generate small spheres */
+    for (int a = -1001; a < 1001; a++) {
+        for (int b = -1001; b < 51; b++) {
+            auto choose_mat = rand_double();
+            Point3D center(a + 0.9*rand_double(), 0.2, b + 0.9*rand_double());
+
+            if ((center - Point3D(4, 0.2, 0)).mag() > 0.9) {
+                std::shared_ptr<Material> sphere_material;
+
+                if (choose_mat < 0.8) {
+                    // diffuse
+                    auto albedo = RGB::random() * RGB::random();
+                    sphere_material = std::make_shared<Lambertian>(albedo);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else if (choose_mat < 0.95) {
+                    // Metal
+                    auto albedo = RGB::random(0.5, 1);
+                    auto fuzz = rand_double(0, 0.5);
+                    sphere_material = std::make_shared<Metal>(albedo, fuzz);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else {
+                    // glass
+                    sphere_material = std::make_shared<Dielectric>(1.5);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+
+    /* Three big spheres */
+    auto material1 = std::make_shared<Dielectric>(1.5);
+    world.add(std::make_shared<Sphere>(Point3D(0, 1, 0), 1.0, material1));
+
+    auto material2 = std::make_shared<Lambertian>(RGB::from_mag(0.4, 0.2, 0.1));
+    world.add(std::make_shared<Sphere>(Point3D(-4, 1, 0), 1.0, material2));
+
+    auto material3 = std::make_shared<Metal>(RGB::from_mag(0.7, 0.6, 0.5), 0.0);
+    world.add(std::make_shared<Sphere>(Point3D(4, 1, 0), 1.0, material3));
+
+    /* Render image (about 3hr 15min on Dell XPS 8960, 16 cores, 24 threads) */
+    Camera().set_image_by_width_and_aspect_ratio(2160, 16. / 9.)
+            .set_vertical_fov(40)  /* Smaller vertical FOV zooms in, also avoids shape stretching */
+            .set_camera_center(Point3D{0, 10, 50})
+            .set_camera_lookat(Point3D{0, 0, 0})
+            .set_camera_up_direction(Vec3D{0, 1, 0})
+            .set_defocus_angle(0.1)
+            .set_focus_distance(51)
+            .set_samples_per_pixel(500)  /* For a high-quality image */
+            .set_max_depth(50)  /* More light bounces for higher quality */
+            .render(world)
+            .send_as_ppm("millions_of_spheres.ppm");
+}
+
+void millions_of_spheres_with_lights() {
+    rng_seeds.seed_with(473654968);
+
+    Scene world;
+
+    /* Big gray sphere for the ground */
+    auto ground_material = std::make_shared<Lambertian>(RGB::from_mag(0.5, 0.5, 0.5));
+    world.add(std::make_shared<Sphere>(Point3D(0,-1000000,0), 1000000, ground_material));
+
+    /* Generate small spheres */
+    for (int a = -1001; a < 1001; a++) {
+        for (int b = -1501; b < 51; b++) {
+            auto choose_mat = rand_double();
+            Point3D center(a + 0.9*rand_double(), 0.2, b + 0.9*rand_double());
+
+            if ((center - Point3D(4, 0.2, 0)).mag() > 0.9) {
+                std::shared_ptr<Material> sphere_material;
+
+                if (choose_mat < 0.035) {
+                    auto albedo = RGB::random();
+                    sphere_material = std::make_shared<DiffuseLight>(albedo, rand_double(5, 15));
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else if (choose_mat < 0.8) {
+                    // diffuse
+                    auto albedo = RGB::random() * RGB::random();
+                    sphere_material = std::make_shared<Lambertian>(albedo);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else if (choose_mat < 0.9) {
+                    // Metal
+                    auto albedo = RGB::random(0.5, 1);
+                    auto fuzz = rand_double(0, 0.5);
+                    sphere_material = std::make_shared<Metal>(albedo, fuzz);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else {
+                    // glass
+                    sphere_material = std::make_shared<Dielectric>(1.5);
+                    world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+
+    /* Three big spheres */
+    auto material1 = std::make_shared<Dielectric>(1.5);
+    world.add(std::make_shared<Sphere>(Point3D(0, 1, 0), 1.0, material1));
+
+    auto material2 = std::make_shared<Lambertian>(RGB::from_mag(0.4, 0.2, 0.1));
+    world.add(std::make_shared<Sphere>(Point3D(-4, 1, 0), 1.0, material2));
+
+    auto material3 = std::make_shared<Metal>(RGB::from_mag(0.7, 0.6, 0.5), 0.0);
+    world.add(std::make_shared<Sphere>(Point3D(4, 1, 0), 1.0, material3));
+    
+    /* Big light directly up from the origin */
+    auto light_material = std::make_shared<DiffuseLight>(
+        RGB::from_mag(0.380205, 0.680817, 0.385431),
+        150
+    );
+    world.add(std::make_shared<Sphere>(Point3D(0, 12, 0), 3, light_material));
+    
+    Camera().set_image_by_width_and_aspect_ratio(1080, 16. / 9.)
+            .set_vertical_fov(40)  /* Smaller FOV means more zoomed in (also avoids stretching) */
+            .set_camera_center(Point3D{0, 12.5, 50})
+            .set_camera_lookat(Point3D{0, 0, 0})
+            .set_camera_up_direction(Vec3D{0, 1, 0})
+            .set_defocus_angle(0.1)
+            .set_focus_distance(51)
+            .set_samples_per_pixel(1000)  /* For a high-quality image */
+            .set_max_depth(20)  /* More light bounces for higher quality */
+            .set_background(RGB::zero())
+            .render(world)
+            .send_as_ppm("millions_of_spheres_with_lights.ppm");
+}
+
 /* First Parallelogram test (corresponds to the image rendered at the end of Section 6
 of The Next Week)*/
 void parallelogram_test() {
@@ -68,12 +344,6 @@ void cornell_box_test(bool empty = false) {
         world.add(ms<Box>(Point3D(130, 0, 65), Point3D(295, 165, 230), white));
         world.add(ms<Box>(Point3D(265, 0, 295), Point3D(430, 330, 460), white));
     }
-
-    /* 2160 width, 1. aspect ratio, 25000 samples per pixel, 50 max depth took 1:31:27 for empty
-    box. With the two boxes (unrotated) added, took 3:20:55.
-    
-    With 1000 width and samples_per_pixel, and with boxes, this takes about 90 seconds on my
-    machine. */
     Camera()
         .set_image_by_width_and_aspect_ratio(1000, 1.)
         .set_samples_per_pixel(1000)
@@ -123,10 +393,9 @@ void raining_on_the_dance_floor() {
         ));
     }
 
-    /* width, aspect ratio, samples, depth, fov: 3840, 1., 25000, 50, 40. Took 9 hours 31 min */
     Camera()
-        .set_image_by_width_and_aspect_ratio(3840, 1.)
-        .set_samples_per_pixel(25000)
+        .set_image_by_width_and_aspect_ratio(3840, 16. / 9.)
+        .set_samples_per_pixel(1000)
         .set_max_depth(50)
         .set_vertical_fov(40)
         .set_camera_center(Point3D{0, 10, 50})
@@ -138,9 +407,75 @@ void raining_on_the_dance_floor() {
         .send_as_ppm("raining_on_the_dance_floor.ppm");
 }
 
+void bvh_pathological_test() {
+    Scene world;
+
+    /* This results in a BVH tree with depth 116. The idea is that if spheres increase
+    exponentially in size, then the SAH will prefer to partition so that the largest
+    sphere gets its own node. This means the depth would theoretically be linear,
+    not logarithmic, in the number of primitives, which is what happens here. */
+    int num_spheres = 135;
+    double pos_scale = 10.7;
+    double rad_scale = 17.3;
+    for (int i = 0; i < num_spheres; ++i) {
+        world.add(ms<Sphere>(
+            Point3D{std::pow(pos_scale, i), 0, 0},
+            std::pow(rad_scale, i),
+            ms<Lambertian>(RGB::zero())
+        ));
+    }
+
+    BVH bvh(world);
+
+    /* Code I used to find the above values. Note that `BVH::build_bvh_tree` needs to be modified
+    to have a `depth` parameter, and there also needs to be a `max_depth` global variable in `bvh.h`.
+
+        std::atomic<int> maxmax_depth = 0;
+        std::mutex mtx2, mtx3;
+        std::tuple info{0, 0., 0.};
+        #pragma omp parallel for schedule(dynamic)
+        for (int spheres = 100; spheres <= 200; ++spheres) {
+            {
+                std::lock_guard guard(mtx2);
+                std::cout << "Testing " << spheres << " spheres" << std::endl;
+            }
+            for (double pos = 10; pos <= 30; pos += 0.1) {
+                for (double rad = 10; rad <= 20; rad += 0.1) {
+                    Scene world;
+
+                    for (int i = 0; i < spheres; ++i) {
+                        world.add(ms<Sphere>(Point3D{std::pow(pos, i), 0, 0}, std::pow(rad, i), ms<Lambertian>(RGB::zero())));
+                    }
+
+                    max_depth = 0;
+                    BVH bvh(world);
+
+                    {
+                        std::lock_guard guard(mtx3);
+                        if (max_depth > maxmax_depth) {
+                            maxmax_depth = max_depth;
+                            info = {spheres, pos, rad};
+                        }
+                    }
+                }
+            }
+        }
+
+        std::cout << maxmax_depth << " <- result" << std::endl;
+
+        std::cout << std::get<0>(info) << " " << std::get<1>(info) << " " << std::get<2>(info) << std::endl;
+        return 0;
+    */
+}
+
 int main()
 {
-    switch(2) {
+    switch(-1) {
+        case -10: bvh_pathological_test(); break;
+        case -4: rtow_final_image(); break;
+        case -3: rtow_final_lights_with_tone_mapping(); break;
+        case -2: millions_of_spheres(); break;
+        case -1: millions_of_spheres_with_lights(); break;
         case 0: parallelogram_test(); break;
         case 1: cornell_box_test(true); break;
         case 2: cornell_box_test(false); break;
