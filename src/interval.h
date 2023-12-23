@@ -27,8 +27,12 @@ struct Interval {
     auto midpoint() const {return std::midpoint(min, max);}
     /* Returns the size of this `Interval`; that is, `max - min`. */
     auto size() const {return max - min;}
-    /* Returns `true` if this `Interval` is empty (that is, if `max - min <= 0`). */
-    bool is_empty() const {return size() <= 0;}
+    /* Returns `true` if this `Interval`, viewed as an INCLUSIVE range, is empty
+    (that is, if `max - min < 0`). */
+    bool is_empty_inclusive() const {return size() < 0;}
+    /* Returns `true` if this `Interval`, viewed as an EXCLUSIVE range, is empty
+    (that is, if `max - min <= 0`). */
+    bool is_empty_exclusive() const {return size() <= 0;}
 
     /* Returns `true` if `d` is in the INCLUSIVE range [min, max]. */
     bool contains_inclusive(double d) const {return min <= d && d <= max;}

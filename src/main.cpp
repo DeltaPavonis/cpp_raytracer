@@ -138,18 +138,19 @@ void rtow_final_lights_with_tone_mapping() {
     );
     world.add(std::make_shared<Sphere>(Point3D(0, 2.5, 2.5), 0.2, light_material));
 
-    Camera().set_image_by_width_and_aspect_ratio(1080, 16. / 9.)
-            .set_vertical_fov(25)  /* Smaller vertical FOV zooms in, also avoids shape stretching */
-            .set_camera_center(Point3D{13, 2, 3})
-            .set_camera_lookat(Point3D{0, 0, 0})
-            .set_camera_up_direction(Vec3D{0, 1, 0})
-            .set_defocus_angle(0.48)
-            .set_focus_distance(10)
-            .set_samples_per_pixel(2000)  /* For a high-quality image */
-            .set_max_depth(20)  /* More light bounces for higher quality */
-            .set_background(RGB::zero())
-            .render(world)
-            .send_as_ppm("rtow_final_lights_with_tone_mapping.ppm");
+    Camera()
+        .set_image_by_width_and_aspect_ratio(1080, 16. / 9.)
+        .set_vertical_fov(25)  /* Smaller vertical FOV zooms in, also avoids shape stretching */
+        .set_camera_center(Point3D{13, 2, 3})
+        .set_camera_lookat(Point3D{0, 0, 0})
+        .set_camera_up_direction(Vec3D{0, 1, 0})
+        .set_defocus_angle(0.48)
+        .set_focus_distance(10)
+        .set_samples_per_pixel(2000)  /* For a high-quality image */
+        .set_max_depth(20)  /* More light bounces for higher quality */
+        .set_background(RGB::zero())
+        .render(world)
+        .send_as_ppm("rtow_final_lights_with_tone_mapping.ppm");
 }
 
 void millions_of_spheres() {
@@ -202,17 +203,18 @@ void millions_of_spheres() {
     world.add(std::make_shared<Sphere>(Point3D(4, 1, 0), 1.0, material3));
 
     /* Render image (about 3hr 15min on Dell XPS 8960, 16 cores, 24 threads) */
-    Camera().set_image_by_width_and_aspect_ratio(2160, 16. / 9.)
-            .set_vertical_fov(40)  /* Smaller vertical FOV zooms in, also avoids shape stretching */
-            .set_camera_center(Point3D{0, 10, 50})
-            .set_camera_lookat(Point3D{0, 0, 0})
-            .set_camera_up_direction(Vec3D{0, 1, 0})
-            .set_defocus_angle(0.1)
-            .set_focus_distance(51)
-            .set_samples_per_pixel(500)  /* For a high-quality image */
-            .set_max_depth(50)  /* More light bounces for higher quality */
-            .render(world)
-            .send_as_ppm("millions_of_spheres.ppm");
+    Camera()
+        .set_image_by_width_and_aspect_ratio(2160, 16. / 9.)
+        .set_vertical_fov(40)  /* Smaller vertical FOV zooms in, also avoids shape stretching */
+        .set_camera_center(Point3D{0, 10, 50})
+        .set_camera_lookat(Point3D{0, 0, 0})
+        .set_camera_up_direction(Vec3D{0, 1, 0})
+        .set_defocus_angle(0.1)
+        .set_focus_distance(51)
+        .set_samples_per_pixel(500)  /* For a high-quality image */
+        .set_max_depth(50)  /* More light bounces for higher quality */
+        .render(world)
+        .send_as_ppm("millions_of_spheres.ppm");
 }
 
 void millions_of_spheres_with_lights() {
@@ -274,18 +276,19 @@ void millions_of_spheres_with_lights() {
     );
     world.add(std::make_shared<Sphere>(Point3D(0, 12, 0), 3, light_material));
     
-    Camera().set_image_by_width_and_aspect_ratio(1080, 16. / 9.)
-            .set_vertical_fov(40)  /* Smaller FOV means more zoomed in (also avoids stretching) */
-            .set_camera_center(Point3D{0, 12.5, 50})
-            .set_camera_lookat(Point3D{0, 0, 0})
-            .set_camera_up_direction(Vec3D{0, 1, 0})
-            .set_defocus_angle(0.1)
-            .set_focus_distance(51)
-            .set_samples_per_pixel(1000)  /* For a high-quality image */
-            .set_max_depth(20)  /* More light bounces for higher quality */
-            .set_background(RGB::zero())
-            .render(world)
-            .send_as_ppm("millions_of_spheres_with_lights.ppm");
+    Camera()
+        .set_image_by_width_and_aspect_ratio(1080, 16. / 9.)
+        .set_vertical_fov(40)  /* Smaller FOV means more zoomed in (also avoids stretching) */
+        .set_camera_center(Point3D{0, 12.5, 50})
+        .set_camera_lookat(Point3D{0, 0, 0})
+        .set_camera_up_direction(Vec3D{0, 1, 0})
+        .set_defocus_angle(0.1)
+        .set_focus_distance(51)
+        .set_samples_per_pixel(1000)  /* For a high-quality image */
+        .set_max_depth(20)  /* More light bounces for higher quality */
+        .set_background(RGB::zero())
+        .render(world)
+        .send_as_ppm("millions_of_spheres_with_lights.ppm");
 }
 
 /* First Parallelogram test (corresponds to the image rendered at the end of Section 6

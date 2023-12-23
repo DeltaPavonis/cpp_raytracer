@@ -146,7 +146,10 @@ class BVH : public Hittable {
         between the pair (first_primitive_index, num_primitives) and second_child_index,
         but we don't because of this). */
         size_t num_primitives;
-        /* For interior nodes, `split_axis`*/
+        /* For interior nodes, `split_axis` records the coordinate axis along which
+        the primitives of this interior node were partitioned for distribution to its
+        two children. Specifically, if `split_axis` equals 0, 1, or 2, then this interior
+        node's primitives were partitioned along the x-, y-, and z-axis, respectively. */
         uint8_t split_axis;
 
         /* `LinearBVHNode::is_leaf_node()` returns true iff this `LinearBVHNode` is a leaf node. */
@@ -175,83 +178,123 @@ class BVH : public Hittable {
 
     /* Build a BVH tree over the `Hittable` primitives specified by `curr_primitives`.
     Specifically, this returns the `root` of a binary tree representing the BVH built
-    over all the primitives in `curr_primitives`. Each node in the tree has type
-    `std::unique_ptr<BVHTreeNode>`. */
+    over all the primitives in `curr_primitives`. Each node in the tree, including the
+    root (which is returned from the function), has type `std::unique_ptr<BVHTreeNode>`. */
     auto build_bvh_tree(std::span<std::shared_ptr<Hittable>> curr_primitives) {
         ++total_bvhnodes;
 
-        /* Compute the bounds for this `BVHTreeNode`'s primitives. We will eventually
-        `std::move` this into one of the named constructors for `BVHTreeNode` (either
-        `BVHTreeNode::leaf_node()` or `BVHTreeNode::interior_node()`). */
+        /* Compute `curr_bounds`, the bounds for all of the current `BVHTreeNode`'s primitives.
+        This will eventually be `std::move`d into the `aabb` field of the `BVHTreeNode` that
+        is returned from this function call. */
         auto curr_bounds = AABB::empty();
         for (const auto &primitive : curr_primitives) {
             curr_bounds.merge_with(primitive->get_aabb());
         }
 
-        /* If there is only one primitive left, then we will return a leaf `BVHTreeNode`
-        (a `BVHTreeNode` whose children are both primitives) that just contains that one primitive. */
+        /* If there is only one primitive, then we cannot split it further. As a result,
+        we will return a leaf `BVHTreeNode` that contains that single primitive. */
         if (curr_primitives.size() == 1) {
             return BVHTreeNode::leaf_node(curr_primitives, std::move(curr_bounds));
         }
 
         /* Compute `centroids_bounds`, the AABB for the centroids of all the AABBs
-        of the primitives in `curr_primitives`. */
+        of all the primitives in `curr_primitives`. */
         auto centroids_bounds = AABB::empty();
         for (const auto &primitive : curr_primitives) {
             centroids_bounds.merge_with(primitive->get_aabb().centroid());
         }
 
-        /* The minimum split "cost" (explained below), the minimum-cost bucket (explained below)
-        at which to split, and the axis along which the minimum-cost bucket splits by. */
+        /* `min_split_cost` = The minimum "cost" of a split (how cost is calculated is explained
+        in the big comment in the main loop).
+
+        `optimal_split_axis` represents the axis that `curr_primitives` was split along when the
+        to achieve the minimum-cost split; if `optimal_split_axis` is 0/1/2, then the minimum-cost
+        split was achieved with a split along the x/y/z axis, respectively. This information will
+        be recorded in the `split_axis` field of the `BVHTreeNode` returned from this function.
+
+        `optimal_split_bucket` = The bucket (along the axis specified by `optimal_split_axis`)
+        that `curr_primitives` was split at to achieve the minimum-cost split. Along with
+        `optimal_split_axis`, this information tells us how exactly to partition `curr_primitives`
+        into two sets if we end up deciding to split `curr_primitives` even further after this.  */
         auto min_split_cost = std::numeric_limits<double>::infinity();
-        size_t optimal_split_bucket;
         uint8_t optimal_split_axis = 0;
+        size_t optimal_split_bucket;
         /* ^^ Note: we initialize `optimal_split_axis` to silence a `-Wmaybe-uninitialized` warning
         in GCC. The compiler mistakenly thinks that in `BVHTreeNode::interior_node`, we will pass
         and subsequently use `optimal_split_axis` while it is uninitialized. This is impossible,
         because the only way `optimal_split_axis` would have been left uninitialized is when all
         iterations of the main loop are skipped (see the first comment in the main loop for when
         this would happen). But in that case, we would immediately return due to the check of
-        `std::isinf(min_split_cost)`, so `optimal_split_axis` is in fact always initialized. */
+        `std::isinf(min_split_cost)` immediately after the loop, so `optimal_split_axis` is in
+        fact always initializeds when we use it. */
         
-        /* Test splits along each axis in turn. This is the main loop. */
+        /* For each axis, test `NUM_BUCKETS` evenly-distributed splits along that axis to find
+        the optimal axis and bucket to split `curr_primitives` at. This is the main loop of
+        `build_bvh_tree()`. */
         for (uint8_t axis = 0; axis < 3; ++axis) {
 
             /* When all the primitives' centroids have the same coordinate along the current axis,
-            then centroids_bounds[axis].size() will equal 0, and so the calculation for `offset` below
-            will result in floating-point divisions by 0. To avoid this, we just skip any such axis
-            where `centroids_bounds[axis].size()` is 0. To avoid a compiler warning about using `==`
-            with floating-points, we don't use `centroids_bounds[axis].size() == 0`, and instead use
-            the standard library function `std::fpclassify` to check for equality with 0. */
-            if (centroids_bounds[axis].is_empty()) {
+            then centroids_bounds[axis].size() will equal 0, and so the calculation for `offset`
+            below will lead to floating-point divisions by 0. To avoid this, we just skip any axis
+            where `centroids_bounds[axis].size()` is 0. To check that the extent of the centroid
+            bounds along a given axis is 0, rather than using == to compare the size of the interval
+            `centroids_bounds[axis]` with 0 (which results in a compiler warning about comparing
+            floating-point values with ==), we use `Interval::is_empty_exclusive`, which returns
+            true if the interval's size is at most 0. This is equivalent to what we want here. */
+            if (centroids_bounds[axis].is_empty_exclusive()) {
                 continue;
             }
 
-            /* ...divide `centroids_bounds` into `NUM_BUCKETS` equally-sized regions along the axis,
-            and for each region, compute its `BucketInfo`: the number of primitives whose centroids
-            lie inside that region, and the AABB of those centroids that lie inside the region. */
+            /* Divide `centroids_bounds[axis]` into `NUM_BUCKETS` equally-sized regions (each of these
+            regions is called a "bucket") along the current axis. For each bucket, we then need to
+            compute its corresponding `BucketInfo`: the number of primitives whose centroids lie
+            inside that bucket, and the AABB of all those centroids. The `BucketInfo` for bucket
+            `i` is stored in `buckets[i]`. */
             std::vector<BucketInfo> buckets(NUM_BUCKETS);
-            /* To do this, iterate through all the primitives being considered. For each, determine
-            which bucket (region) it lies in, and update that bucket correspondingly. */
-            for (auto &i : curr_primitives) {
+            /* To compute the `BucketInfo` for all buckets (the number of primitives whose centroids
+            lie inside each bucket, as well as the AABB for the centroids), we iterate through the
+            all the primitives in `curr_primitives`. For each, determine which bucket (region) it lies
+            in, and update that bucket correspondingly. */
+            for (auto &primitive : curr_primitives) {
 
-                /* Compute the bucket in which the centroid of the object `i` lies.
-                `offset` = the ratio of*/
-                auto offset = (i->get_aabb().centroid()[axis] - centroids_bounds[axis].min)
+                /* Compute the bucket along the current axis in which the current primitive's AABB's
+                centroid lies. To do this, first normalize the centroid's `axis`-coordinate with
+                respect to the minimum and maximum `axis`-coordinate across all the centroids of all
+                the primitives being considered. By the definition of normalization, if the current
+                centroid has `axis`-coordinate c, and the interval of `axis`-coordinate's across all
+                centroids [a, b], then the normalized value of c is given by (c - a) / (b - a).
+                This value is stored in the variable `offset`, and it tells us the relative position
+                of the centroid's `axis`-coordinate among the extent of all primitive's AABB's
+                centroids along the current axis. Clearly, `offset` is in the interval [0, 1].
+                Finally, because the `NUM_BUCKETS` buckets are evenly-sized ranges along the
+                interval of all primitive's bound's centroids along the current axis, bucket
+                `i` corresponds exactly to the interval [i / NUM_BUCKETS, (i + 1) / NUM_BUCKETS).
+                As a result, the bucket number of the centroid is found by multiplying `offset`
+                by `NUM_BUCKETS`, and then taking the floor of that. As we'll see immediately
+                below, however, there is an edge case. See if you can spot it. */
+                auto offset = (primitive->get_aabb().centroid()[axis] - centroids_bounds[axis].min)
                              / centroids_bounds[axis].size();
                 auto curr_bucket = static_cast<size_t>(static_cast<double>(NUM_BUCKETS) * offset);
 
-                /* In case `offset` = 1 exactly, we would have `curr_bucket` equal to `NUM_BUCKETS`,
-                which would cause an out-of-bounds access in `buckets`. This happens whenever this
-                object's centroid has the maximum coordinate along this axis among all the objects.
-                When this happens, we place the current object in the very last bucket. */
+                /* Edge case: In the case that the current centroid's `axis`-coordinate equals the
+                maximum `axis`-coordinate among all the centroids, then `offset` will equal 1, and
+                so the bucket number will equal `NUM_BUCKETS`. However, we define bucket numbers to
+                only go from 0 to `NUM_BUCKETS` - 1; trying to retrieve `buckets[NUM_BUCKETS]` is
+                an out-of-bounds access in `buckets`. So, we need to choose a bucket (from 0 to
+                `NUM_BUCKETS - 1`) to place the current centroid in. Now, because this edge case
+                occurs exactly when the current centroid has the maximum `axis`-coordinate, it makes
+                the most sense to place the current primitive in the very last bucket, because that
+                bucket corresponds to the primitives with the largest `axis`-coordinates. Thus,
+                whenever `curr_bucket` is set to `NUM_BUCKETS` from above, then we will instead
+                set it to `NUM_BUCKETS` - 1. */
                 if (curr_bucket == NUM_BUCKETS) {
-                    --curr_bucket;  /* Decrement `curr_bucket`; place `i` in the very last bucket */
+                    --curr_bucket;  /* Set `curr_bucket` to (`NUM_BUCKETS` - 1). */
                 }
 
-                /* Update the currents bucket's `BucketInfo` */
+                /* Now that we've found which bucket the current primitive's AABB's centroid lies
+                in, update that bucket's `BucketInfo`. */
                 buckets[curr_bucket].num_primitives++;
-                buckets[curr_bucket].aabb.merge_with(i->get_aabb());
+                buckets[curr_bucket].aabb.merge_with(primitive->get_aabb());
             }
 
             /* In building a BVH using the SAH (Surface Area Heuristic), a greedy algorithm is used,
@@ -331,8 +374,8 @@ class BVH : public Hittable {
                 /* Again, we are looking for the split that leads to the minimum cost. */
                 if (costs[i] < min_split_cost) {
                     min_split_cost = costs[i];
-                    optimal_split_bucket = i;
                     optimal_split_axis = axis;
+                    optimal_split_bucket = i;
                 }
             }
         }
@@ -363,7 +406,8 @@ class BVH : public Hittable {
         there are too many primitives left to make a single leaf node (as determined by
         the constant `MAX_PRIMITIVES_IN_NODE`), then we will choose to use the minimum-cost
         split that we found. This means we will choose to make the current node an
-        INTERIOR (non-leaf) BVH node. */
+        INTERIOR (non-leaf) BVH node, and partition the current set of primitives for
+        distribution to the current INTERIOR node's left and right children. */
         if (curr_primitives.size() > MAX_PRIMITIVES_IN_NODE || min_split_cost < leaf_cost) {
 
             /* Split `objects` into two sets, the first containing all objects that fall into bucket
@@ -707,9 +751,8 @@ public:
     BVH(const T &world, size_t num_buckets = 32, size_t max_primitives_in_node = 12)
         : primitives{std::move(world.get_primitive_components())},
           /* ^^ Build the Bounding Volume Hierarchy over the primitive components of the `Hittable`
-          objects in the scene, rather than just the objects themselves. This is because
-          `Hittable` objects may be compound; they may contain other `Hittable`s. Building a
-          `BVH` over just the `Hittable` objects themselves could therefore*/
+          objects in the scene, rather than just the objects themselves. The reason why we do this
+           is thoroughly explained in the comments for `Hittable::get_primitive_components()`. */
           MAX_PRIMITIVES_IN_NODE{max_primitives_in_node},
           NUM_BUCKETS{num_buckets}
     {

@@ -82,10 +82,13 @@ public:
             last_percent = curr_percent;
         }
 
-        if (iter_done == total_iter) {
-            std::cout << "\n" << desc << ": Finished in "
-                      << seconds_to_dhms(seconds_diff(start_time, clock_type::now())) << '\n'
-                      << std::endl;
+        if constexpr (!DISABLE_PRINTING) {
+            if (iter_done == total_iter) {
+                std::cout << "\n" << desc << ": Finished in "
+                          << seconds_to_dhms(seconds_diff(start_time, clock_type::now()))
+                          << '\n'
+                          << std::endl;
+            }
         }
     }
 

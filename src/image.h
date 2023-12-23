@@ -112,7 +112,7 @@ public:
             std::exit(-1);
         }
 
-        /* Input maximum RGB magnitude (second be line 3) */
+        /* Input maximum RGB magnitude (should be line 3) */
         int max_magnitude;
         if (!(fin >> max_magnitude)) {
             std::cout << "Error: In Image::from_ppm_file(\"" << file_name << "\"), could not "
@@ -131,8 +131,17 @@ public:
                 int r, g, b;
                 if (!(fin >> r >> g >> b)) {
                     std::cout << "Error: In Image::from_ppm_file(\"" << file_name << "\"), failed "
-                                "to parse color #" << (row * image_width) + col + 1 <<
-                                " (three integers (r, g, b))" << std::endl;
+                                 "to parse color #" << (row * image_width) + col + 1 <<
+                                 " (three integers (r, g, b))" << std::endl;
+                    std::exit(-1);
+                }
+
+                /* Require that all of r, g, b are non-negative */
+                if (r < 0 || g < 0 || b < 0) {
+                    std::cout << "Error: In Image::from_ppm_file(\"" << file_name << "\"), found "
+                                 "negative RGB channel value; color #"
+                              << (row * image_width) + col + 1 << " was (" << r << ", " << g
+                              << ", " << b << ")" << std::endl;
                     std::exit(-1);
                 }
                 

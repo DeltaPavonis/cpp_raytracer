@@ -64,8 +64,8 @@ class Camera {
     Vec3D defocus_disk_x, defocus_disk_y;
     /* Coordinates of the top-left image pixel (calculated in `init()`) */
     Point3D pixel00_loc;
-    /* Number of rays sampled per pixel, 100 by default */
-    size_t samples_per_pixel = 100;
+    /* Number of rays sampled per pixel, 1 by default */
+    size_t samples_per_pixel = 1;
     /* Maximum number of light ray bounces into the scene, 10 by default */
     size_t max_depth = 10;
     /* Vertical and horizontal FOV (Field of View) of the camera, stored in radians.
@@ -425,7 +425,7 @@ public:
            << "\tDefocus dist x-, y- orthonormal basis vectors {"
            << "\n\t\tx: " << defocus_disk_x
            << "\n\t\ty: "<< defocus_disk_y << "\n\t}\n"
-           << "\tViewport top-left corner location: " << pixel00_loc << '\n'
+           << "\tTop-left pixel's center on viewport: " << pixel00_loc << '\n'
            << "\tSamples per pixel: " << samples_per_pixel << '\n'
            << "\tMaximum bounces per ray: " << max_depth << '\n'
            << "\tVertical FOV (-1 means not given): " << vertical_fov.value_or(-1) << " rad, "
