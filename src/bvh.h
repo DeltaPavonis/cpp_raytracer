@@ -245,16 +245,16 @@ class BVH : public Hittable {
                 continue;
             }
 
-            /* Divide `centroids_bounds[axis]` into `NUM_BUCKETS` equally-sized regions (each of these
-            regions is called a "bucket") along the current axis. For each bucket, we then need to
-            compute its corresponding `BucketInfo`: the number of primitives whose centroids lie
-            inside that bucket, and the AABB of all those centroids. The `BucketInfo` for bucket
+            /* Divide `centroids_bounds[axis]` into `NUM_BUCKETS` equally-sized regions (each of
+            these regions is called a "bucket") along the current axis. For each bucket, we then
+            need to compute its corresponding `BucketInfo`: the number of primitives whose centroids
+            lie inside that bucket, and the AABB of all those centroids. The `BucketInfo` for bucket
             `i` is stored in `buckets[i]`. */
             std::vector<BucketInfo> buckets(NUM_BUCKETS);
             /* To compute the `BucketInfo` for all buckets (the number of primitives whose centroids
             lie inside each bucket, as well as the AABB for the centroids), we iterate through the
-            all the primitives in `curr_primitives`. For each, determine which bucket (region) it lies
-            in, and update that bucket correspondingly. */
+            all the primitives in `curr_primitives`. For each primitive, we determine which bucket
+            (region) it lies in, and update that bucket accordingly. */
             for (auto &primitive : curr_primitives) {
 
                 /* Compute the bucket along the current axis in which the current primitive's AABB's
@@ -368,8 +368,8 @@ class BVH : public Hittable {
                           * static_cast<double>(num_primitives_after_split);
             }
 
-            /* Update `min_split_cost`, `optimal_split_bucket`, and `optimal_split_axis` with all the
-            buckets we tested along the current `axis` */
+            /* Update `min_split_cost`, `optimal_split_bucket`, and `optimal_split_axis` with all
+            the buckets we tested along the current `axis` */
             for (size_t i = 0; i < NUM_BUCKETS - 1; ++i) {
                 /* Again, we are looking for the split that leads to the minimum cost. */
                 if (costs[i] < min_split_cost) {
@@ -410,14 +410,16 @@ class BVH : public Hittable {
         distribution to the current INTERIOR node's left and right children. */
         if (curr_primitives.size() > MAX_PRIMITIVES_IN_NODE || min_split_cost < leaf_cost) {
 
-            /* Split `objects` into two sets, the first containing all objects that fall into bucket
-            at most `optimal_split_bucket` along the axis `optimal_split_axis`, and the second containing
-            all other objects. To do this, we use `std::partition` on `objects`. */
+            /* Split `objects` into two sets along the axis `optimal_split_axis`, the first of which
+            will contain all primitives whose bucket number is at most `optimal_split_bucket`, and
+            the second of which will contain all the other primitives. To perform the split, we
+            apply `std::partition` to `objects`. */
             auto mid = std::partition(curr_primitives.begin(), curr_primitives.end(),
-            [&](const std::shared_ptr<Hittable> &object) {
-                /* Copied from above; determine which bucket the current `object`'s centroid lies
-                in */
-                auto offset = (object->get_aabb().centroid()[optimal_split_axis]
+            [&](const std::shared_ptr<Hittable> &primitive) {
+                /* First, we determine which bucket the current `primitive`'s centroid lies in.
+                The code to determine the bucket for a given primitive is the same as used
+                previously. */
+                auto offset = (primitive->get_aabb().centroid()[optimal_split_axis]
                              - centroids_bounds[optimal_split_axis].min)
                              / centroids_bounds[optimal_split_axis].size();
                 auto curr_bucket = static_cast<size_t>(static_cast<double>(NUM_BUCKETS) * offset);
@@ -437,8 +439,11 @@ class BVH : public Hittable {
             axis `optimal_split_axis` that fall in buckets at most `optimal_split_bucket`; the
             primitives with axis coordinates at most the optimal coordinate split threshold),
             and the right child (`right_child`) will be built over the primitives to the right
-            of the partition. */
-            auto left_child = build_bvh_tree(curr_primitives.subspan(0, mid));  /* `std::span::subspan`! */
+            of the partition. After applying `std::partition` to `curr_primitives`, this is
+            equivalent to saying that `left_child` will be built over `curr_primitives[0..mid)`,
+            and that `right_child` will be built over `curr_primitives[mid..)`. This is very
+            conveniently expressed using `std::span::subspan`. */
+            auto left_child = build_bvh_tree(curr_primitives.subspan(0, mid));
             auto right_child = build_bvh_tree(curr_primitives.subspan(mid));
 
             /* Again, in this case, the current node will be an interior node. */
@@ -531,7 +536,7 @@ class BVH : public Hittable {
     }
 
     /* Flattens the BVH tree constructed in `build_bvh_tree` (rooted at `tree_root`), and
-    stores the result in `linear_bvh_nodes`. This consumes the BVH tree in the result,
+    stores the result in `linear_bvh_nodes`. This consumes the BVH tree in the process,
     freeing all associated memory.  */
     auto flatten_bvh_tree(std::unique_ptr<BVHTreeNode> tree_root) {
         /* Because we computed `total_bvhnodes`, we are able to allocate the exact

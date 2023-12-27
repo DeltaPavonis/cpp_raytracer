@@ -35,7 +35,7 @@ public:
     auto aspect_ratio() const {return static_cast<double>(w) / static_cast<double>(h);}
 
     /* Prints this `Image` in PPM format to the file with name specified by `destination`. */
-    void send_as_ppm(const std::string &destination) {
+    void send_as_ppm(const std::string &destination) const {
         if (std::ofstream fout(destination); !fout.is_open()) {
             std::cout << "Error: In Image::print_as_ppm(), could not open the file \""
                       << destination << "\"" << std::endl;
@@ -53,6 +53,18 @@ public:
 
             std::cout << "Image successfully saved to \"" << destination << "\"" << std::endl;
         }
+    }
+
+    auto& outline_border() {
+        for (size_t row = 0; row < h; ++row) {
+            pixels[row][0] = pixels[row][w - 1] = RGB::from_mag(1);
+        }
+
+        for (size_t col = 1; col < w - 1; ++col) {
+            pixels[0][col] = pixels[h - 1][col] = RGB::from_mag(1);
+        }
+
+        return *this;
     }
 
     /* --- NAMED CONSTRUCTORS --- */
@@ -90,7 +102,7 @@ public:
         /* Try to open the file `file_name` */
         std::ifstream fin(file_name);
         if (!fin.is_open()) {
-            std::cout << "Error: In Image::from_ppm_file(), could not open the file \""
+            std::cout << "Error: In Image::from_ppm_file(), could not find/open the file \""
                       << file_name << "\"" << std::endl;
             std::exit(-1);
         }
@@ -104,7 +116,7 @@ public:
             std::exit(-1);
         }
 
-        /* Input image width and image height (should be line 2) */
+        /* Input image width and image height */
         size_t image_width, image_height;
         if (!(fin >> image_width >> image_height)) {
             std::cout << "Error: In Image::from_ppm_file(\"" << file_name << "\"), could not "
@@ -112,7 +124,7 @@ public:
             std::exit(-1);
         }
 
-        /* Input maximum RGB magnitude (should be line 3) */
+        /* Input maximum RGB magnitude */
         int max_magnitude;
         if (!(fin >> max_magnitude)) {
             std::cout << "Error: In Image::from_ppm_file(\"" << file_name << "\"), could not "

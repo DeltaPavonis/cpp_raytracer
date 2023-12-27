@@ -16,7 +16,7 @@ struct Sphere : public Hittable {
     Point3D center;
     /* `radius`: The radius of this `Sphere`. */
     double radius;
-    /* `material`: The material of this `Sphere` object. */
+    /* `material`: The material of this `Sphere`. */
     std::shared_ptr<Material> material;
     /* `aabb` = The AABB (Axis-Aligned Bounding Box) for this `Sphere`. */
     AABB aabb;
@@ -103,12 +103,12 @@ struct Sphere : public Hittable {
     /* Prints this `Sphere` to the `std::ostream` specified by `os`. */
     void print_to(std::ostream &os) const override {
         /* Desmos format is "sphere((x, y, z), radius)" */
-        os << "Sphere { center: " << center << ", radius: " << radius << ", material: " << *material
+        os << "Sphere {center: " << center << ", radius: " << radius << ", material: " << *material
            << "} " << std::flush;
     }
 
     /* Constructs a Sphere with center `center_`, radius `radius_`, and material
-    specified by `material_` */
+    specified by `material_`. */
     Sphere(const Point3D &center_, double radius_, std::shared_ptr<Material> material_)
         : center{center_}, radius{radius_}, material{std::move(material_)}
     {

@@ -200,7 +200,8 @@ class Camera {
     }
 
     /* Computes and returns the color of the light ray `ray` shot into the `Hittable`
-    specified by `world`. If `ray` has bounced more than `depth_left` times, returns `RGB::zero()`. */
+    specified by `world`. If `ray` has bounced more than `depth_left` times, returns
+    `RGB::zero()`. */
     template<typename T>
     requires std::is_base_of_v<Hittable, T>
     auto ray_color(const Ray3D &ray, size_t depth_left, const T &world) {
