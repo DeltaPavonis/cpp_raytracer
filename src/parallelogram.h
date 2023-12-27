@@ -26,79 +26,108 @@ class Parallelogram : public Hittable {
     /* `material` = The material of this `Parallelogram` object. */
     std::shared_ptr<Material> material;
 
-    /* `unit_plane_normal` = n.unit_vector(), where `n = cross(side1, side2)`, a normal vector
-    to the plane containing this `Parallelogram`. We precompute this quantity, because it is
-    returned as a part of the `hit_info` for every ray-`Parallelogram` intersection in
-    `Parallelogram::hit_by()` as the `outward_unit_surface_normal`.
+    /* `unit_plane_normal` is a unit vector normal to the plane containing this `Parallelogram`.
+    Specifically, `unit_plane_normal` is the unit vector of `cross(side1, side2)`,
+    which we know is a normal vector to the plane of this `Parallelogram`. We precompute this
+    quantity because (a) we will use it in some of our computations in `Parallelogram::hit_by()`,
+    and (b) it will be the `outward_unit_surface_normal` field of every `hit_info` returned
+    from `Parallelogram::hit_by()`, so it is beneficial to compute it exactly once.
     
-    Note that for a flat object, "outside" and "inside" is arbitrary. We just keep it simple
-    here and say that the direction of `cross(side1, side2)` is the outside normal. You could
-    say instead that the direction of `cross(side1, side2)` is the INSIDE normal; it'd make
-    no difference, except for flipping the `hit_from_outside` for all `hit_info`s returned
-    from `Parallelogram::hit_by()`. */
+    About the "outward" in `outward_unit_surface_normal`, note that there is no singular definition
+    of "outside" and "inside" for a flat object such as a parallelogram. Here, we declare that the
+    direction of the normal `cross(side1, side2)` is outward-facing. You could say instead that the
+    direction of `cross(side1, side2)` is inward-facing; the only difference would be that the
+    `hit_from_outside` field of all `hit_info`s returned from `Parallelogram::hit_by()` will be
+    flipped. */
     Vec3D unit_plane_normal;
     /* `scaled_plane_normal` = n / dot(n, n), where `n = cross(side1, side2)`, a normal vector
     to the plane containing this `Parallelogram`. We precompute this quantity to be used in
     `Parallelogram::hit_by()`. */
     Vec3D scaled_plane_normal;
-
     /* `aabb` = The AABB (Axis-Aligned Bounding Box) for this `Parallelogram`. */
     AABB aabb;
 
 public:
 
     /* There are three steps to perform a ray-parallelogram intersection check:
-    1. Find the plane that contains the parallelogram
-    2. Find the intersection point of the ray with that parallelogram-containing plane
-    3. Determine if the hitpoint of the ray on the plane lies within the parallelogram itself.
+    1. Find the unique plane containing the parallelogram.
+    2. Find the intersection point of the ray with that parallelogram-containing plane.
+    3. Determine if the hit point of the ray on the plane lies within the parallelogram itself.
     
-    STEP 1: Find the plane that intersects the parallelogram.
-    Remember that a plane is determined by a normal vector `n` to that plane, as well as a
-    point on the plane. We want to find the plane that contains the parallelogram. Now, a
-    normal vector to the parallelogram (and so also a normal vector to the plane containing
-    that parallelogram) can be found by taking the cross product of the two side vectors;
-    `cross(side, side2)`. Then, we need an arbitrary point on the plane; for this, we can just
-    take the given vertex `vertex`, which we know to be on the parallelogram (and so we know
-    it to be on the parallelogram-containing plane as well).
+    STEP 1: Find the plane that contains the parallelogram.
+    Remember that a plane is fully specified by two things: a normal vector to the plane and a
+    point on the plane. Now, we want to determine the plane containing the parallelogram. Firstly,
+    observe that a vector is normal to the parallelogram-containing plane iff it is normal to
+    the parallelogram itself. And so, it suffices to find a vector normal to the parallelogram;
+    this can be done by taking the cross product of the two side vectors: `cross(side1, side2)`.
+    Now, we need an arbitrary point on the parallelogram-containing plane; for this, we can just
+    take the given vertex of the parallelogram `vertex`, which we know to be on the parallelogram
+    (and so we know it to be on the parallelogram-containing plane as well).
     
-    Now, we have that a normal to the plane that contains this parallelogram is
-    `n = cross(side1, side2)`, and a point on the plane is `vertex`. As a result, the plane
-    equation can be written as `dot(n, P - vertex) = 0` for points `P (so a point `P` is on
-    the plane iff the vector from Q to it is normal to the plane's normal vector). An equivalent
-    and more useful formulation of this equation that we will use is `dot(n, P) = dot(n, vertex)`.
-    This completes the first step.
+    We have found a normal vector to the plane containing this parallelogram: `cross(side1, side2)`.
+    We also have a point on the plane: `vertex`. Now, given a normal vector to a plane `n` and a
+    point `p` on that plane, the plane consists of exactly the points `P` that satisfy the equation
+    `dot(n, P - p) = 0` (because the equation is equivalent to the statement that a point `P` is
+    on a plane iff the vector from some point on the plane to it is normal to the plane's normal
+    vector, which is clearly true). An equivalent and more useful formulation of this equation
+    that we will use is `dot(n, P) = dot(n, p)`. Finally, because all nonzero scalar multiples
+    of a normal vector to a plane are also normal to a plane (as multiplying a vector by a nonzero
+    scalar preserves its direction), and because we know that `cross(side1, side2)` is normal to
+    the parallelogram-containing plane, we have that any `k * cross(side1, side2)` for a nonzero
+    real number `k` is normal to the parallelogram-containing plane. So, if we let `n` equal
+    `cross(side1, side2)`, then our parallelogram-containing plane consists of exactly the points
+    `P` where `dot(kn, P) = dot(kn, vertex)` for any fixed nonzero real number `k`. This completes
+    the first step.
     
     STEP 2: Find the intersection point of the ray with the parallelogram-containing plane.
-    Let the ray be defined by R(t) = O + td. First, we solve for the hit time of the ray
-    with the plane; that is, we find the `t` that satisfies `dot(n, R(t)) = dot(n, vertex)`.
-    Because R(t) = O + td, this becomes `dot(n, O + td) = dot(n, vertex)`, and so
-    `dot(n, O) + dot(n, td) = dot(n, vertex)`. Solving, we find that
-    `t = dot(n, vertex - O) / dot(n, d)`.
+    Let the ray be defined by R(t) = O + tD. Now, we first solve for the hit time of the ray with
+    the plane. Using the equation we derived in Step 1, solving for the hit time is equivalent to
+    solving `dot(kn, R(t)) = dot(kn, vertex)` for `t`, where `k` is any nonzero real number.
+    Then, substituting O + tD for R(t), this equation becomes `dot(kn, O + tD) = dot(kn, vertex)`,
+    and so `dot(kn, O) + dot(kn, tD) = dot(kn, vertex)`. Solving, we find that
+    `t = dot(kn, vertex - O) / dot(kn, D)`.
 
-    Observe that it is possible for a ray to not intersect the plane; this happens when the
-    ray is parallel to the plane and the ray's origin is not on the plane. When the ray is
-    parallel to the plane, then it will be perpendicular to the plane's normal vector, and
-    so `dot(n, d)` will equal 0, allowing us to detect such cases. In practice, we will
-    just reject all rays where `dot(n, d)` is small, to avoid numerical issues. In my
-    implementation below, I reject all rays where `|dot(n, d)| < 1e-9`.
+    However, it is possible for a ray to not intersect the plane at all; this happens when the ray
+    is parallel to the plane and the ray's origin is not on the plane. A ray is parallel to the
+    plane iff it is perpendicular to the plane's normal vector, which holds iff `dot(kn, D)`
+    equals 0 (where `D` is the direction vector of the ray, remember). Observe that this corresponds
+    to the case where calculating `t` results in a division by 0 (because the denominator of the
+    fraction that equals `t` is also `dot(kn, d)`); clearly, `t` does not exist in that case.
+    In practice, we make two simplifications: firstly, we immediately reject all rays that are
+    parallel to the plane, even if the ray's origin is on the plane (because while such a ray does
+    indeed intersect the plane (at infinitely many points, in fact), it causes problems insofar that
+    the direction of the `outward_unit_surface_normal` from the intersection point would be unclear,
+    and that fundamentally, a plane is infinitely thin, and there's no analogy to real life for a
+    ray (photon) colliding with an infinitely-thin edge, which is what would happen in this case).
+    The second simplification we will make is that we will just reject all rays where `dot(kn, D)`
+    is small (not necessarily exactly 0), to avoid numerical issues. In my implementation below,
+    I just reject all rays where `|dot(kn, D)| < 1e-9`.
+        Note: Because we are checking |dot(kn, d)| against a constant, the choice of `k` becomes
+        important. In particular, if the components of `kn` are too small, then `dot(kn, D)` may
+        have magnitude less than `1e-9` even when `kn` and `D` are not close to parallel, resulting
+        in rays being incorrectly rejected. At the same time, though, if the components of `kn` are
+        too big, then the calculation of `dot(kn, d)` will be more susceptible to floating-point
+        inaccuracies. My solution is to always use the unit vector of `n` in the equation (so set
+        k = 1 / |n|). This ensures some level of consistency across the magnitudes of the components
+        of `kn`, and seems to work well from my experimentation.
 
-    We now have shown that the hit time is `t = dot(n, vertex - O) / dot(n, d)` (assuming
-    that `dot(n, d)` is not too small; if it is, then again, we just assume the ray does
+    We now have shown that the hit time is `t = dot(kn, vertex - O) / dot(kn, D)` (assuming
+    that `dot(kn, D)` is not too small; if it is, then again, we just assume the ray does
     not hit this parallelogram to avoid numerical issues). To find the hit point, just
-    find `O + td` with that value of `t`. This completes the second step.
+    find `R(t) = O + tD` with that value of `t`. This completes the second step.
 
     STEP 3: Determine if the hit point of the ray with the parallelogram-containing plane also
     lies within the parallelogram itself.
 
     First, observe that {`side1`, `side2`} forms a basis for the parallelogram-containing plane,
     because `side1` and `side2` are linearly independent (since they are not parallel), and because
-    they are two vectors in a space (a plane) of dimension two. Now, we choose the "origin" of
+    they are two vectors in a space of dimension two (the plane). Now, we choose the "origin" of
     the parallelogram-containing plane to be `vertex`. Then, we know that
     (a) Because {`side1`, `side2`} is a basis of the plane, there exist unique scalars alpha/beta
     such that `hit_point = vertex + alpha * side1 + beta * side2`.
     (b) Because of the definition of a parallelogram, and because we chose the origin of the plane
     to be `vertex` itself, we know that the hit point is inside the parallelogram if and only if
-    0 <= alpha, beta <= 1, where `hit_point = vertex + alpha * side1 + beta * side`, as stated
+    0 <= alpha, beta <= 1, where `hit_point = vertex + alpha * side1 + beta * side2` as stated
     above.
 
     Thus, it remains to solve the equation `hit_point = vertex + alpha * side1 + beta * side2`.
@@ -147,22 +176,38 @@ public:
     object is returned. */
     std::optional<hit_info> hit_by(const Ray3D &ray, const Interval &ray_times) const override {
 
-        /* The hit time is equal to dot(n, vertex - ray.origin) / dot(n, ray.dir), where `n` is
-        any normal to the parallelogram-containing plane. Since we have already precomputed
-        `scaled_plane_normal`, we just use that. All that matters is that the `n` used in the
-        numerator and denominator of the fraction is the same `n`.
+        /* If the ray `ray` hits the plane containing this `Parallelogram`, then the hit time is
+        equal to dot(kn, vertex - ray.origin) / dot(kn, ray.dir), where `n = cross(side1, side2)`
+        and `k` is any nonzero real number.
         
-        Now, as explained above, we first check if the ray is parallel (or very close to parallel)
-        to the parallelogram-containing plane. If so, we just return an empty
-        `std::optional<hit_info>`, signifying that the ray did not intersect this parallelogram. */
-        auto hit_time_denominator = dot(scaled_plane_normal, ray.dir);
+        However, as explained above, before computing the hit time of the ray, we will first check
+        if the ray intersects with the plane at all. For our purposes, as explained above,
+        this is equivalent to checking if `dot(kn, ray.dir)` (the denominator of the fraction
+        that equals the hit time) is smaller than some constant (1e-9 here). Finally, the choice
+        of `k` is important, as explained above; we will choose to use `k = 1 / |n|` (so
+        kn = `unit_plane_normal` exactly), because this prevents the components of `kn` from
+        becoming too small (which could cause `hit_time_denominator` to be less than 1e-9 more
+        often than it should) or too large (which could lead to floating-point inaccuracies in
+        the computation of `dot(kn, ray.dir)`). When I initially used `kn = scaled_plane_normal
+        = n / |n|^2`, parallelograms with coordinates on the order of 1e6 started rejecting all
+        rays, resulting in them not rendering at all. From my testing,`unit_plane_normal` does
+        not have the same issue.
+        
+        In summary, if the ray is parallel or very close to parallel to the parallelogram-containing
+        plane, we just immediately reject the ray to avoid numerical issues. To do this, we return
+        an empty `std::optional<hit_info>` if `dot(unit_plane_normal, ray.dir)` is less than our
+        chosen constant. */
+        auto hit_time_denominator = dot(unit_plane_normal, ray.dir);  /* Use `unit_plane_normal` */
         if (std::fabs(hit_time_denominator) < 1e-9) {
             return {};
         }
 
         /* If the ray is not parallel/very close to parallel to the plane, compute the hit time.
         First, make sure that the hit time is in the desired time range `ray_times`. */
-        auto hit_time = dot(scaled_plane_normal, vertex - ray.origin) / hit_time_denominator;
+        auto hit_time = dot(unit_plane_normal, vertex - ray.origin) / hit_time_denominator;
+        /* ^^ We must use `unit_plane_normal` here because we used `unit_plane_normal` in computing
+        the `hit_time_denominator`. The normal we use must be the same in the numerator and the
+        denominator. */
         if (!ray_times.contains_exclusive(hit_time)) {  /* Remember that `ray_times` is exclusive */
             return {};
         }
@@ -189,8 +234,8 @@ public:
             return hit_info(hit_time, hit_point, unit_plane_normal, ray, material);
         }
 
-        /* The ray hit the plane, but the hitpoint was not in the parallelogram itself, so we will
-        return an empty `std::optional<hit_info>`.*/
+        /* The ray hit the parallelogram-containing plane, but it did not hit the parallelogram
+        itself, so we will still return an empty `std::optional<hit_info>`.*/
         return {};
     }
 
@@ -235,12 +280,13 @@ public:
         /* The `AABB` for a `Parallelogram` is simply the minimum-size `AABB` that contains all the
         vertices of the parallelogram; that is, the `AABB` containing `vertex`, `vertex + side1`,
         `vertex + side2`, and the opposite vertex (which, remember, is calculated by
-        `vertex + side1 + side2` for parallelograms).
+        `vertex + side1 + side2` for parallelograms). This is because parallelograms are convex,
+        so a bounding box that contains the vertices contains the whole shape.
 
         Then, because parallelograms are 2D, the resulting AABB may have zero thickness in one
-        of its dimensions if it is parallel to the xy-/xz-/yz-plane, which can result in numerical
-        issues. To avoid this, we pad the axis intervals of the AABB, making sure that every
-        axis interval has length at least some small constant (1e-4 here). */
+        of its dimensions (when it is parallel to one of the xy-/xz-/yz-planes), which can result
+        in numerical issues. To avoid this, we pad every axis interval of the AABB; specifically,
+        we ensure that every axis interval has length at least some small constant (1e-4 here). */
         aabb = AABB::from_points({
             vertex,                  /* The given vertex of this parallelogram */
             vertex + side1,          /* The vertex opposite to `vertex` along the first side */
