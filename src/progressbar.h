@@ -4,168 +4,118 @@
 #include <mutex>
 #include "time_util.h"
 
-/* ProgressBar displays a progress bar for time-costly for-loops
-that have a number of iterations that is known beforehand (i.e.
-the loop variable is updated by a constant amount each iteration).
-If DISABLE_PRINTING is true, then the progress bar will not print.
+/* ProgressBar displays a live progress bar for loops where the total number of iterations is
+known beforehand. If DISABLE_PRINTING is true, then the progress bar will not print anything.
 ProgressBar is thread-safe.
 
 Usage:
 
+```cpp
 auto progress_bar = ProgressBar("Rendering", 100);
 for (int i = 0; i < 100; ++i) {
     // Do stuff
-    progress_bar.update();
+    progress_bar.complete_iteration();
 }
-
-Old usage: Deprecated because `#pragma omp parallel for` requires `for`-loops
-to have "canonical form", which, among other things, requires the type of the
-iterated object to be an integer, pointer, or random-access iterator type
-(see https://www.openmp.org/wp-content/uploads/OpenMP-API-Specification-5-2.pdf,
-specifically, the bottom of page 85, the bottom of page 87, and the top of page
-88).
-for (ProgressBar<int> row("Do stuff", 0, 100); row(); ++row) {
-    // Do stuff, you can use `row` directly
-}
-This was much more convenient; the `ProgressBar` only needs to be alive inside the
-`for`-loop, and it is. Also, you only have to write the beginning and end of the loop
-(0 and 100 here) once.
-
-*/
+``` */
 template <bool DISABLE_PRINTING = false>
 class ProgressBar {
-    using clock_type = std::chrono::high_resolution_clock;
-    using instant = std::chrono::time_point<clock_type>;
+    using Clock = std::chrono::high_resolution_clock;
+    using TimePoint = std::chrono::time_point<Clock>;
 
-    size_t iter_done, total_iter;
-    unsigned last_percent, downscale_factor;
-    std::string desc;
-    instant start_time;
-    std::string time_left;
-    std::mutex mtx;
+    size_t total_iterations, iterations_done;
+    unsigned percent_done;
+    unsigned downscale_factor; /* The progress bar will have length (100 / `downscale_factor`) */
+    std::string description;   /* Description of task */
+    TimePoint start_time;
+    std::string progress_info; /* Printed after progress bar, contains time elapsed, % done, etc. */
+    std::mutex update_progress_bar_mtx;
 
 public:
 
     /* Increments the number of iterations done, and, if the next percent towards finishing has been
     achieved, also updates the progress bar and the estimated time left. Thread-safe. */
-    void update() {
-        std::lock_guard guard(mtx);  /* Ensure only one thread can execute `update()` at a time */
-
-        ++iter_done;
-
-        /* Check if the next percent towards finishing has been achieved */
-        auto curr = static_cast<double>(iter_done) / static_cast<double>(total_iter);
-        auto curr_percent = static_cast<unsigned>(100 * curr);
-
-        if (curr_percent > last_percent) {
-            /* Delete the last estimated time and add as many '#'s as needed */
-            if constexpr (!DISABLE_PRINTING) {
-                for (size_t i = 0; i < time_left.size(); ++i) {std::cout << "\b \b";}
-                std::cout << std::string(curr_percent / downscale_factor
-                                            - last_percent / downscale_factor, '#');
-            }
-
-            /* Compute estimated time left and print it on the same line.
-            Estimated time left = (time passed so far) * (iterations left / iterations done)
-            = (time passed so far) * (total_iter - iter_done) / iter_done
-            = (time passed so far) * (1/curr - 1) */
-            auto seconds_now = static_cast<double>(ms_diff(start_time, clock_type::now())) / 1000;
-            auto seconds_left = static_cast<long long>(seconds_now * (1/curr - 1));
-
-            time_left = " (Estimated time left: " + seconds_to_dhms(seconds_left) + ")";
-            if constexpr (!DISABLE_PRINTING) {
-                if (iter_done != total_iter) {
-                    std::cout << time_left << std::flush;
-                }
-            }
-
-            last_percent = curr_percent;
+    void complete_iteration() {
+        if constexpr (DISABLE_PRINTING) {
+            return;
         }
 
-        if constexpr (!DISABLE_PRINTING) {
-            if (iter_done == total_iter) {
-                std::cout << "\n" << desc << ": Finished in "
-                          << seconds_to_dhms(seconds_diff(start_time, clock_type::now()))
-                          << '\n'
-                          << std::endl;
+        /* Allow only one thread to execute `update()` at a time. */
+        std::lock_guard guard(update_progress_bar_mtx);
+
+        ++iterations_done;
+
+        /* Compute the current proportion and current percent of iterations completed */
+        auto curr_proportion_done = static_cast<double>(iterations_done)
+                                  / static_cast<double>(total_iterations);
+        auto curr_percent_done = static_cast<unsigned>(100 * curr_proportion_done);
+
+        /* Check if the next percent towards finishing has been achieved */
+        if (curr_percent_done > percent_done) {
+
+            /* Delete the progress information printed previously */
+            for (size_t i = 0; i < progress_info.size(); ++i) {std::cout << "\b \b";}
+
+            /* Update the progress bar with the necessary number of `#`s. When we are x% done, we will have
+            printed (x / downscale_factor) `#`s, so we will add (curr_percent_done / downscale_factor) - 
+            (percent_done / downscale_factor) `#`s. */
+            std::cout << std::string(
+                curr_percent_done / downscale_factor - percent_done / downscale_factor,
+                '#'
+            );
+
+            /* Compute the estimated time left. To do this, we assume that the remaining iterations
+            will be completed at the same average rate as the currently-finished iterations. Thus,
+            the estimated time left is given by (time elapsed) * (1 - R) / R, where R is the current
+            proportion of iterations completed. Note that we compute the seconds passed by dividing
+            the milliseconds passed by 1000; this makes `seconds_left` more accurate. */
+            auto seconds_passed = static_cast<double>(ms_diff(start_time, Clock::now())) / 1000;
+            auto seconds_left = static_cast<long long>(
+                seconds_passed * (1 - curr_proportion_done) / curr_proportion_done
+            );
+
+            /* Update `progress_info` with new information. `progress_info` includes the percentage
+            towards finishing, the current time elapsed, and the estimated time left. */
+            progress_info = " " + std::to_string(curr_percent_done) + "% done, "
+                          + seconds_to_dhms(static_cast<long long>(seconds_passed)) + " elapsed, "
+                          + seconds_to_dhms(seconds_left) + " left (est.)";
+                
+            /* As long as we are not done, print `progress_info` after the progress bar. */
+            if (iterations_done != total_iterations) {
+                std::cout << progress_info << std::flush;
             }
+
+            /* Update `percent_done` */
+            percent_done = curr_percent_done;
+        }
+
+        /* If completed, print a completion message with the total time elapsed */
+        if (iterations_done == total_iterations) {
+            std::cout << "\n" << description << ": Finished in "
+                        << seconds_to_dhms(seconds_diff(start_time, Clock::now()))
+                        << '\n'
+                        << std::endl;
         }
     }
 
-    ProgressBar(size_t total_iterations, std::string description = "Progress",
-                unsigned downscale_factor_ = 2)
-        : iter_done{0}, total_iter{total_iterations}, last_percent{0},
-          downscale_factor{downscale_factor_}, desc{description}, start_time{clock_type::now()}
+    /* Constructs a `ProgressBar` for the task described by `task_description_`, which requires
+    `total_iterations_` iterations in total. The progress bar will be (100 / `downscale_factor_`)
+    characters long; `downscale_factor_` is 2 by default, resulting in a 50-character-long progress
+    bar. */
+    ProgressBar(size_t total_iterations_, const std::string &task_description = "Progress",
+                unsigned downscale_factor_ = 2 )
+        : total_iterations{total_iterations_},
+          iterations_done{0},
+          percent_done{0},
+          downscale_factor{downscale_factor_},
+          description{task_description},
+          start_time{Clock::now()}
     {
         if constexpr (!DISABLE_PRINTING) {
-            std::cout << desc << '\n';
+            std::cout << description << '\n';
             std::cout << '|' << std::string(100 / downscale_factor, ' ') << "|\n";
             std::cout << ' ' << std::flush;
         }
     }
 };
-
-// template <typename T, bool DISABLE_PRINTING = false>
-// struct ProgressBar {
-//     using clock_type = std::chrono::high_resolution_clock;
-//     using instant = std::chrono::time_point<clock_type>;
-
-//     std::string desc, time_left; /* desc = name of task */
-//     T curr, beg, end; /* Iterate through the range [beg, end) */
-//     /* All ProgressBar's will use 100 / downscale_factor characters for the progress bar.
-//     So, the larger downscale_factor is, the smaller the progress bar is. */
-//     unsigned last_percent, downscale_factor;
-//     instant start_time;
-
-//     /* Allows convenient access to `curr` */
-//     operator T&() {return curr;}
-//     operator const T&() const {return curr;}
-
-//     /* Updates/prints the progress bar, and returns `true` if the loop is NOT over */
-//     bool operator() () {
-//         unsigned curr_percent = static_cast<unsigned>(100 * (curr - beg) / (end - beg));
-//         if (curr_percent > last_percent) {
-
-//             /* Delete the last estimated time and add as many '#'s as needed */
-//             if constexpr (!DISABLE_PRINTING) {
-//                 for (size_t i = 0; i < time_left.size(); ++i) {std::cout << "\b \b";}
-//                 std::cout << std::string(curr_percent / downscale_factor
-//                                          - last_percent / downscale_factor, '#');
-//             }
-
-//             /* Compute new estimated time left and print it on the same line */
-//             long long seconds_left = std::chrono::duration_cast<std::chrono::milliseconds>
-//                                 (clock_type::now() - start_time).count() *
-//                                 (double(100. - curr_percent) / curr_percent) / 1000.;
-
-//             time_left = " (Estimated time left: " + seconds_to_dhms(seconds_left) + ")";
-//             if constexpr (!DISABLE_PRINTING) {std::cout << time_left << std::flush;}
-
-//             last_percent = curr_percent;
-//         }
-
-//         return curr < end;
-//     }
-
-//     ProgressBar(T beg_, T end_, const std::string &desc_ = "Progress",
-//                 unsigned downscale_factor_ = 2)
-//         : desc{desc_}, time_left{}, curr{beg_}, beg{beg_},
-//         end{end_}, last_percent{0}, downscale_factor{downscale_factor_},
-//         start_time{clock_type::now()}
-//     {
-//         if constexpr (!DISABLE_PRINTING) {
-//             std::cout << desc << '\n';
-//             std::cout << '|' << std::string(100 / downscale_factor, ' ') << "|\n";
-//             std::cout << ' ' << std::flush;
-//         }
-//     }
-
-//     ~ProgressBar() {
-//         auto total_seconds = std::chrono::duration_cast<std::chrono::seconds>
-//                              (clock_type::now() - start_time).count();
-//         std::cout << "\n" << desc << ": Finished in "
-//                   << seconds_to_dhms(total_seconds) << std::endl;
-//     }
-// };
 
 #endif

@@ -291,7 +291,7 @@ public:
 
                 img[row][col] = pixel_color;
             }
-            pb.update();
+            pb.complete_iteration();
         }
         return img;
     }

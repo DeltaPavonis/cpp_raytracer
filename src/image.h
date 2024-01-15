@@ -48,7 +48,7 @@ public:
                 for (size_t col = 0; col < w; ++col) {
                     fout << pixels[row][col].as_string() << '\n';
                 }
-                pb.update();
+                pb.complete_iteration();
             }
 
             std::cout << "Image successfully saved to \"" << destination << "\"" << std::endl;
