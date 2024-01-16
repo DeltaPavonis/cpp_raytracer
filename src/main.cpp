@@ -78,7 +78,7 @@ void rtow_final_image() {
 
 void rtow_final_lights_with_tone_mapping() {
     /* Now with custom fixed seeds. */
-    rng_seeds.seed_with(1541739242);
+    SeedSeqGenerator::get_instance().set_seed(2286021279);
 
     Scene world;
 
@@ -218,7 +218,7 @@ void millions_of_spheres() {
 }
 
 void millions_of_spheres_with_lights() {
-    rng_seeds.seed_with(473654968);
+    SeedSeqGenerator::get_instance().set_seed(473654968);
 
     Scene world;
 
@@ -365,7 +365,7 @@ void cornell_box_test(bool empty = false) {
 away into the distance, above which are suspended numerous glass (and a few metal) "raindrops"
 (spheres). */
 void raining_on_the_dance_floor() {
-    rng_seeds.seed_with(5987634);
+    SeedSeqGenerator::get_instance().set_seed(5987634);
 
     Scene world;
 
@@ -401,7 +401,7 @@ void raining_on_the_dance_floor() {
 
     Camera()
         .set_image_by_width_and_aspect_ratio(2160, 16. / 9.)
-        .set_samples_per_pixel(10)
+        .set_samples_per_pixel(50)
         .set_max_depth(50)
         .set_vertical_fov(40)
         .set_camera_center(Point3D{0, 10, 50})
@@ -414,7 +414,7 @@ void raining_on_the_dance_floor() {
 }
 
 void christmas_tree_made_of_spheres() {
-    rng_seeds.seed_with(20231225);  /* Nice seed */
+    SeedSeqGenerator::get_instance().set_seed(20231225);  /* Nice seed */
 
     Scene world;
 
