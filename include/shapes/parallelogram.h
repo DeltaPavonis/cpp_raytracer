@@ -1,14 +1,14 @@
 #ifndef PARALLELOGRAM_H
 #define PARALLELOGRAM_H
 
-#include "vec3d.h"
-#include "hittable.h"
-#include "material.h"
+#include "math/vec3d.h"
+#include "base/hittable.h"
+#include "base/material.h"
 
 /* `Parallelogram` is an abstraction over a 2D parallelogram in 3D space. */
 class Parallelogram : public Hittable {
     /* A 2D parallelogram in 3D space is represented by a given vertex, and two vectors
-    corresponding to the two sides of the parallelogram _ */
+    corresponding to the two sides of the parallelogram. */
 
     /* `vertex` = A given vertex of the parallelogram. */
     Point3D vertex;

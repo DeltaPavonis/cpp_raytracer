@@ -2,7 +2,7 @@
 #define PROGRESS_BAR_H
 
 #include <mutex>
-#include "time_util.h"
+#include "util/time_util.h"
 
 /* ProgressBar displays a live progress bar for loops where the total number of iterations is
 known beforehand. If DISABLE_PRINTING is true, then the progress bar will not print anything.
@@ -55,9 +55,9 @@ public:
             /* Delete the progress information printed previously */
             for (size_t i = 0; i < progress_info.size(); ++i) {std::cout << "\b \b";}
 
-            /* Update the progress bar with the necessary number of `#`s. When we are x% done, we will have
-            printed (x / downscale_factor) `#`s, so we will add (curr_percent_done / downscale_factor) - 
-            (percent_done / downscale_factor) `#`s. */
+            /* Update the progress bar with the necessary number of `#`s. When we are x% done, we
+            will have printed (x / downscale_factor) `#`s, so we will add (curr_percent_done /
+            downscale_factor) -  (percent_done / downscale_factor) `#`s. */
             std::cout << std::string(
                 curr_percent_done / downscale_factor - percent_done / downscale_factor,
                 '#'

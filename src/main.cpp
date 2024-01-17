@@ -1,10 +1,8 @@
-#include "rand_util.h"
-#include "sphere.h"
-#include "scene.h"
-#include "material.h"
-#include "camera.h"
-#include "parallelogram.h"
-#include "box.h"
+#include "util/rand_util.h"
+#include "base/scene.h"
+#include "base/material.h"
+#include "base/camera.h"
+#include "shapes/shapes.h"
 
 /* Instead of `std::make_shared<T>`, I just need to type `ms<T>` now. */
 template<typename T, typename... Args>
@@ -508,7 +506,7 @@ void christmas_tree_made_of_spheres() {
             );
             /* The first ornament, which is located at the very top of the Christmas tree, will
             instead be a white `DiffuseLight` with a relative intensity of 10. This is similar to
-            the star ornament placed on many Christmas trees I've seen. */
+            the star ornament placed at the top of many Christmas trees I've seen. */
             if (i == 0) {
                 material = ms<DiffuseLight>(RGB::from_mag(1), 10);
             }

@@ -5,7 +5,7 @@
 #include <iterator>
 #include <memory>
 #include <span>
-#include "hittable.h"
+#include "base/hittable.h"
 
 /* `Scene` is an abstraction over a list of `Hittable` objects in 3D space.
 As its name suggests, it is designed to be used to represent `Scene`s of objects. */

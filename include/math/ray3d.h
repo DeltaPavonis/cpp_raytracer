@@ -2,7 +2,7 @@
 #define RAY3D_H
 
 #include <iostream>
-#include "vec3d.h"
+#include "math/vec3d.h"
 
 /* `Ray3D` represents a ray in 3D space; that is, an origin (a 3D point) and
 a direction (a 3D vector). */

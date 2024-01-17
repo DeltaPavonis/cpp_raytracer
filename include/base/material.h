@@ -2,10 +2,9 @@
 #define MATERIAL_H
 
 #include <iostream>
-#include "rgb.h"
-#include "ray3d.h"
-#include "hittable.h"
-#include "rand_util.h"
+#include "util/rgb.h"
+#include "math/ray3d.h"
+#include "util/rand_util.h"
 
 /* `scatter_info` stores information about scattered rays; specifically, it stores the
 origin and direction of the scattered ray, as well as the color attenuation resulting from

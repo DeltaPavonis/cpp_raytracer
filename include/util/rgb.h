@@ -3,8 +3,8 @@
 
 #include <cmath>
 #include <string>
-#include "rand_util.h"
-#include "interval.h"
+#include "util/rand_util.h"
+#include "math/interval.h"
 
 /* Returns the gamma-encoded value of the magnitude `d`, under a gamma of `gamma` (2 by default). */
 auto linear_to_gamma(double d, double gamma = 2) {

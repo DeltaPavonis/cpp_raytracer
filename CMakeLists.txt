@@ -35,7 +35,7 @@ add_executable(cpp_raytracer ${CPP_RAYTRACER_SOURCES})
 target_compile_features(cpp_raytracer PUBLIC cxx_std_20)
 set_target_properties(cpp_raytracer PROPERTIES CXX_EXTENSIONS OFF)
 
-target_include_directories(cpp_raytracer PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(cpp_raytracer PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # The following is "the modern way to add OpenMP to a target" (cpp_raytracer is the target here).
 # (See https://cliutils.gitlab.io/modern-cmake/chapters/packages/OpenMP.html).

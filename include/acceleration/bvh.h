@@ -5,8 +5,8 @@
 #include <algorithm>  /* For `std::partition` */
 #include <span>
 #include <type_traits>  /* For `std::is_base_of_v` (to guarantee static dispatch when possible) */
-#include "time_util.h"
-#include "scene.h"
+#include "util/time_util.h"
+#include "base/scene.h"
 
 /* `BVH` is an abstraction over a Bounding Volume Hierarchy, which is a data structure that allows
 for sublinear ray-scene intersection tests. Implementation inspired by

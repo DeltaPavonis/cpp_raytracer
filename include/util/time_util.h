@@ -18,7 +18,7 @@ auto ms_diff(const std::chrono::time_point<T> &start, const std::chrono::time_po
 
 /* Converts `seconds` seconds into DHMS (days, hours, minutes, seconds), in the readable
 format "_d _hr _min _s". If a quantity is 0, then its corresponding time unit is omitted
-(so 1 hour and 5 seconds would just be "1hr 5s", not "1hr 0min 5s"). */
+(so 1 hour and 5 seconds would just be "1hr 5s", not "1hr 0min 5s"), for instance. */
 auto seconds_to_dhms(unsigned long long seconds) {
     const static std::array<std::pair<unsigned, std::string>, 4> conv{{
         {86400, "d"}, {3600, "hr"}, {60, "min"}, {1, "s"}

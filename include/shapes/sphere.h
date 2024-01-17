@@ -3,10 +3,10 @@
 
 #include <iostream>
 #include <memory>
-#include "hittable.h"
-#include "vec3d.h"
-#include "ray3d.h"
-#include "material.h"
+#include "base/hittable.h"
+#include "math/vec3d.h"
+#include "math/ray3d.h"
+#include "base/material.h"
 
 /* `Sphere` is an abstraction over a sphere in 3D space. */
 struct Sphere : public Hittable {

@@ -7,8 +7,8 @@
 #include <vector>
 #include <string>
 #include <cstdlib>  /* For std::exit() */
-#include "rgb.h"
-#include "progressbar.h"
+#include "util/rgb.h"
+#include "util/progressbar.h"
 
 /* The `Image` type encapsulates a 2D image as a 2D array of `RGB` pixels. It is appropriate for
 images that need manipulations, because it stores and allows access to all the`RGB` pixels. If you

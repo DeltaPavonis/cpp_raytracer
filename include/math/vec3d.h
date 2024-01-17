@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <optional>
-#include "rand_util.h"
+#include "util/rand_util.h"
 
 /* Vec3D represents a 3-dimensional vector, or equivalently, a point in 3D space. */
 struct Vec3D {

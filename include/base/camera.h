@@ -2,9 +2,9 @@
 #define CAMERA_H
 
 #include <numbers>
-#include "image.h"
-#include "ray3d.h"
-#include "bvh.h"
+#include "util/image.h"
+#include "math/ray3d.h"
+#include "acceleration/bvh.h"
 
 /* The class `Camera` encapsulates the notion of a camera viewing a 3D scene from
 a designated camera/eye point, located a certain length (called the focal length)

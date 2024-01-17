@@ -1,8 +1,8 @@
 #ifndef AABB_H
 #define AABB_H
 
-#include "ray3d.h"
-#include "interval.h"
+#include "math/ray3d.h"
+#include "math/interval.h"
 
 class AABB {
     /* Observe that an n-dimensional axis-aligned bounding box is equivalent to the intersection of

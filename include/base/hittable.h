@@ -6,12 +6,12 @@
 #include <cmath>
 #include <memory>
 #include <optional>
-#include "ray3d.h"
-#include "interval.h"
-#include "aabb.h"
+#include "math/ray3d.h"
+#include "math/interval.h"
+#include "acceleration/aabb.h"
 
 /* Forward-declare the class `Material` to avoid circular dependencies of
-"material.h" and "hittable.h" on each other */
+"base/material.h" and "base/hittable.h" on each other */
 class Material;
 
 /* `hit_info` stores information about a given ray-object intersection, including

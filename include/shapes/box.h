@@ -2,9 +2,9 @@
 #define BOX_SURFACE_H
 
 #include <array>
-#include "hittable.h"
-#include "parallelogram.h"
-#include "scene.h"
+#include "base/hittable.h"
+#include "shapes/parallelogram.h"
+#include "base/scene.h"
 
 /* `Box` is an abstraction over a 3D box - a rectangular prism - in 3D space. */
 class Box : public Hittable {
